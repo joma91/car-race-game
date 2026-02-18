@@ -1,244 +1,296 @@
-let canvas, ctx, car, track, startTime, elapsedTime, lapCount, gameRunning, startButton, playAgainButton;
+function initCarRaceGame() {
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const startButton = document.getElementById('startButton');
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM fully loaded and parsed');
-    canvas = document.getElementById('gameCanvas');
-    ctx = canvas.getContext('2d');
-    startButton = document.getElementById('startButton');
-    playAgainButton = document.getElementById('playAgainButton');
+  // Colors from CarOnSale branding
+  const colors = {
+    yellow: '#FFD452',
+    darkGray: '#2F343E',
+    lightGray: '#474B57',
+    white: '#FFFFFF',
+    lightBlue: '#BAC5E5',
+    brickRed: '#8e402a',
+    brickDark: '#302018'
+  };
 
-    if (!canvas || !ctx) {
-        console.error('Canvas or context not found');
-        return;
+  // Game variables
+  let gameLoop;
+  let car;
+  let track;
+  let startTime;
+  let currentTime;
+  let finalTime;
+  let gameState = 'menu';
+  let gameStarted = false;
+
+  // Car object
+  class Car {
+    constructor() {
+      this.x = 375;
+      this.y = 320;
+      this.angle = 0;
+      this.speed = 0;
+      this.lap = 1;
+      this.checkpoint = 0;
     }
 
-    startButton.onclick = startGame;
-    playAgainButton.onclick = resetGame;
+    update() {
+      if (!gameStarted && (keys.ArrowUp || keys.ArrowDown || keys.ArrowLeft || keys.ArrowRight)) {
+        gameStarted = true;
+        startTime = Date.now();
+      }
 
-    // Draw the initial menu screen
-    drawMenuScreen();
+      if (keys.ArrowUp) this.speed += 0.2;
+      if (keys.ArrowDown) this.speed -= 0.1;
+      if (keys.ArrowLeft) this.angle -= 0.05;
+      if (keys.ArrowRight) this.angle += 0.05;
 
-    console.log('Game initialized and ready to start');
+      this.speed *= 0.98;
+
+      let newX = this.x + Math.cos(this.angle) * this.speed;
+      let newY = this.y + Math.sin(this.angle) * this.speed;
+
+      if (this.isOnTrack(newX, newY)) {
+        this.x = newX;
+        this.y = newY;
+      } else {
+        this.speed = 0;
+      }
+
+      if (this.x > 350 && this.x < 400 && this.y > 300 && this.y < 340) {
+        if (this.checkpoint === 1) {
+          if (this.lap < 3) {
+            this.lap++;
+          } else if (this.lap === 3) {
+            gameState = 'finished';
+            finalTime = currentTime;
+          }
+        }
+        this.checkpoint = 0;
+      } else if (this.x > 600 && this.y > 150 && this.y < 200) {
+        this.checkpoint = 1;
+      }
+    }
+
+    isOnTrack(x, y) {
+      return (x > 55 && x < 645 && y > 55 && y < 345) && 
+             !(x > 105 && x < 595 && y > 105 && y < 295);
+    }
+
+    draw() {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.angle);
+      
+      ctx.fillStyle = colors.yellow;
+      ctx.beginPath();
+      ctx.moveTo(-15, -8);
+      ctx.lineTo(15, -8);
+      ctx.lineTo(15, 8);
+      ctx.lineTo(-15, 8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = colors.darkGray;
+      ctx.fillRect(-10, -7, 5, 14);
+      ctx.fillRect(5, -7, 5, 14);
+      ctx.fillRect(-5, -8, 10, 2);
+      ctx.fillRect(-5, 6, 10, 2);
+
+      ctx.fillRect(-12, -10, 4, 2);
+      ctx.fillRect(-12, 8, 4, 2);
+      ctx.fillRect(8, -10, 4, 2);
+      ctx.fillRect(8, 8, 4, 2);
+
+      ctx.restore();
+    }
+  }
+
+  // Track object
+  class Track {
+    constructor() {
+      this.innerPoints = [
+        [105, 105], [595, 105], [595, 295], [105, 295]
+      ];
+      this.outerPoints = [
+        [55, 55], [645, 55], [645, 345], [55, 345]
+      ];
+    }
+
+    draw() {
+      ctx.fillStyle = colors.darkGray;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = colors.lightGray;
+      ctx.beginPath();
+      ctx.moveTo(this.outerPoints[0][0], this.outerPoints[0][1]);
+      for (let point of this.outerPoints) {
+        ctx.lineTo(point[0], point[1]);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = colors.darkGray;
+      ctx.beginPath();
+      ctx.moveTo(this.innerPoints[0][0], this.innerPoints[0][1]);
+      for (let point of this.innerPoints) {
+        ctx.lineTo(point[0], point[1]);
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      this.drawBrickWall(this.outerPoints);
+      this.drawBrickWall(this.innerPoints);
+
+      ctx.strokeStyle = colors.white;
+      ctx.setLineDash([20, 20]);
+      ctx.beginPath();
+      ctx.moveTo(80, 80);
+      ctx.lineTo(620, 80);
+      ctx.lineTo(620, 320);
+      ctx.lineTo(80, 320);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const squareSize = 10;
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 5; j++) {
+          ctx.fillStyle = (i + j) % 2 === 0 ? colors.white : colors.darkGray;
+          ctx.fillRect(350 + j * squareSize, 300 + i * squareSize, squareSize, squareSize);
+        }
+      }
+    }
+
+    drawBrickWall(points) {
+      const brickHeight = 10;
+      const brickWidth = 20;
+
+      for (let i = 0; i < points.length; i++) {
+        const [x1, y1] = points[i];
+        const [x2, y2] = points[(i + 1) % points.length];
+        
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        
+        const bricksCount = Math.floor(distance / brickWidth);
+        
+        for (let j = 0; j < bricksCount; j++) {
+          ctx.save();
+          ctx.translate(x1 + dx * j / bricksCount, y1 + dy * j / bricksCount);
+          ctx.rotate(angle);
+          
+          ctx.fillStyle = colors.brickRed;
+          ctx.fillRect(0, -brickHeight / 2, brickWidth, brickHeight);
+          
+          ctx.strokeStyle = colors.brickDark;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(0, -brickHeight / 2, brickWidth, brickHeight);
+          
+          ctx.restore();
+        }
+      }
+    }
+  }
+
+  // Input handling
+  const keys = {};
+  document.addEventListener('keydown', (e) => keys[e.code] = true);
+  document.addEventListener('keyup', (e) => keys[e.code] = false);
+
+  function startGame() {
+    console.log('Starting game...');
+    gameState = 'playing';
+    gameStarted = false;
+    startButton.style.display = 'none';
+    car = new Car();
+    track = new Track();
+    startTime = null;
+    currentTime = 0;
+    finalTime = 0;
+    if (gameLoop) clearInterval(gameLoop);
+    gameLoop = setInterval(update, 1000 / 60);
+  }
+
+  function update() {
+    if (gameState === 'playing') {
+      car.update();
+      if (gameStarted) {
+        currentTime = (Date.now() - startTime) / 1000;
+      }
+    }
+    draw();
+  }
+
+  function draw() {
+    console.log('Drawing...');
+    if (gameState === 'menu') {
+      drawMenu();
+    } else {
+      track.draw();
+      car.draw();
+
+      ctx.fillStyle = colors.white;
+      ctx.font = '20px Arial';
+      ctx.fillText(`Lap: ${car.lap}/3`, 10, 70);
+      ctx.fillText(`Time: ${gameStarted ? currentTime.toFixed(2) : '0.00'}s`, 10, 100);
+
+      ctx.fillStyle = colors.darkGray;
+      ctx.fillRect(0, 0, canvas.width, 40);
+      ctx.font = 'bold 24px Arial';
+      ctx.fillStyle = colors.white;
+      ctx.fillText('CAR ON SALE', 270, 28);
+
+      if (gameState === 'finished') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = colors.white;
+        ctx.font = '40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Race Finished!', canvas.width / 2, 180);
+        ctx.font = '30px Arial';
+        ctx.fillText(`Total Time: ${finalTime.toFixed(2)}s`, canvas.width / 2, 230);
+        ctx.textAlign = 'left';
+
+        startButton.style.display = 'block';
+        startButton.textContent = 'Play Again';
+      }
+    }
+  }
+
+  function drawMenu() {
+    ctx.fillStyle = colors.darkGray;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = colors.white;
+    ctx.font = 'bold 40px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Car Race Game', canvas.width / 2, 150);
+
+    ctx.font = '20px Arial';
+    ctx.fillText('Click "Start Game" to begin', canvas.width / 2, 200);
+
+    ctx.fillStyle = colors.darkGray;
+    ctx.fillRect(0, 0, canvas.width, 40);
+    ctx.font = 'bold 24px Arial';
+    ctx.fillStyle = colors.white;
+    ctx.textAlign = 'center';
+    ctx.fillText('CAR ON SALE', canvas.width / 2, 28);
+  }
+
+  // Initial setup
+  startButton.onclick = startGame;
+  draw(); // Initial draw to show the menu
+}
+
+// Call the initialization function when the script loads
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM fully loaded and parsed');
+  initCarRaceGame();
 });
 
-function drawMenuScreen() {
-    console.log('Drawing menu screen');
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'white';
-    ctx.font = '30px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Welcome to Car Racing Game', canvas.width / 2, canvas.height / 2 - 30);
-    ctx.font = '20px Arial';
-    ctx.fillText('Click Start Game to begin', canvas.width / 2, canvas.height / 2 + 20);
-}
-
-function startGame() {
-    console.log('Game starting...');
-    startButton.style.display = 'none';
-    playAgainButton.style.display = 'none';
-    
-    track = new Track();
-    car = new Car();
-    lapCount = 0;
-    gameRunning = true;
-    startTime = null;
-    elapsedTime = 0;
-
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
-
-    console.log('Starting game loop');
-    gameLoop();
-}
-
-function resetGame() {
-    console.log('Resetting game...');
-    startGame();
-}
-
-function gameLoop() {
-    if (!gameRunning) {
-        console.log('Game not running, exiting game loop');
-        return;
-    }
-
-    console.log('Game loop iteration');
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-function update() {
-    if (startTime === null && (car.vx !== 0 || car.vy !== 0)) {
-        startTime = performance.now();
-    }
-
-    if (startTime !== null) {
-        elapsedTime = performance.now() - startTime;
-    }
-
-    car.update();
-    checkCollision();
-    checkLap();
-}
-
-function draw() {
-    console.log('Drawing frame');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    track.draw();
-    car.draw();
-
-    // Draw lap count and timer
-    ctx.fillStyle = 'white';
-    ctx.font = '20px Arial';
-    ctx.fillText(`Lap: ${lapCount}/3`, 50, 30);
-    ctx.fillText(`Time: ${(elapsedTime / 1000).toFixed(2)}s`, canvas.width - 100, 30);
-}
-
-function Car() {
-    this.x = 400;
-    this.y = 200;
-    this.width = 20;
-    this.height = 40;
-    this.angle = 0;
-    this.speed = 0;
-    this.vx = 0;
-    this.vy = 0;
-    this.acceleration = 0.2;
-    this.deceleration = 0.1;
-    this.maxSpeed = 5;
-    this.rotationSpeed = 0.1;
-
-    this.update = function() {
-        if (keys.ArrowUp) this.speed += this.acceleration;
-        if (keys.ArrowDown) this.speed -= this.acceleration;
-        if (!keys.ArrowUp && !keys.ArrowDown) {
-            if (this.speed > 0) this.speed -= this.deceleration;
-            if (this.speed < 0) this.speed += this.deceleration;
-        }
-
-        this.speed = Math.max(-this.maxSpeed, Math.min(this.maxSpeed, this.speed));
-
-        if (keys.ArrowLeft) this.angle -= this.rotationSpeed;
-        if (keys.ArrowRight) this.angle += this.rotationSpeed;
-
-        this.vx = Math.sin(this.angle) * this.speed;
-        this.vy = -Math.cos(this.angle) * this.speed;
-
-        this.x += this.vx;
-        this.y += this.vy;
-    }
-
-    this.draw = function() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle);
-        ctx.fillStyle = 'red';
-        ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
-        ctx.restore();
-    }
-}
-
-function Track() {
-    this.innerRadius = 100;
-    this.outerRadius = 200;
-    this.centerX = canvas.width / 2;
-    this.centerY = canvas.height / 2;
-
-    this.draw = function() {
-        ctx.fillStyle = 'green';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = 'gray';
-        ctx.beginPath();
-        ctx.arc(this.centerX, this.centerY, this.outerRadius, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = 'green';
-        ctx.beginPath();
-        ctx.arc(this.centerX, this.centerY, this.innerRadius, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Draw start/finish line
-        ctx.fillStyle = 'white';
-        ctx.fillRect(this.centerX - 2, this.centerY - this.outerRadius, 4, this.outerRadius - this.innerRadius);
-
-        // Draw checkered pattern
-        const squareSize = 10;
-        const startX = this.centerX - 2;
-        const startY = this.centerY - this.outerRadius;
-        const height = this.outerRadius - this.innerRadius;
-        
-        for (let i = 0; i < height / squareSize; i++) {
-            if (i % 2 === 0) {
-                ctx.fillStyle = 'black';
-            } else {
-                ctx.fillStyle = 'white';
-            }
-            ctx.fillRect(startX, startY + i * squareSize, 4, squareSize);
-        }
-    }
-}
-
-const keys = {};
-
-function handleKeyDown(e) {
-    keys[e.code] = true;
-}
-
-function handleKeyUp(e) {
-    keys[e.code] = false;
-}
-
-function checkCollision() {
-    const dx = car.x - track.centerX;
-    const dy = car.y - track.centerY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    if (distance < track.innerRadius || distance > track.outerRadius) {
-        car.x -= car.vx;
-        car.y -= car.vy;
-        car.speed = 0;
-    }
-}
-
-function checkLap() {
-    const dx = car.x - track.centerX;
-    const dy = car.y - track.centerY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    if (distance >= track.innerRadius && distance <= track.outerRadius) {
-        if (car.x > track.centerX && car.x < track.centerX + 5 && car.y < track.centerY) {
-            lapCount++;
-            if (lapCount === 3) {
-                endGame();
-            }
-        }
-    }
-}
-
-function endGame() {
-    gameRunning = false;
-    document.removeEventListener('keydown', handleKeyDown);
-    document.removeEventListener('keyup', handleKeyUp);
-
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = 'white';
-    ctx.font = '30px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(`Race Completed!`, canvas.width / 2, canvas.height / 2 - 50);
-    ctx.fillText(`Total Time: ${(elapsedTime / 1000).toFixed(2)}s`, canvas.width / 2, canvas.height / 2);
-
-    showPlayAgainButton();
-}
-
-function showPlayAgainButton() {
-    playAgainButton.style.display = 'block';
-    playAgainButton.style.position = 'absolute';
-    playAgainButton.style.left = '50%';
-    playAgainButton.style.top = '60%'; // Geändert von 50% auf 60%
-    playAgainButton.style.transform = 'translate(-50%, -50%)';
-}
+// Add this line for debugging
+console.log('Script loaded');
