@@ -206,6 +206,20 @@ function initCarRaceGame() {
     gameState = 'playing';
     gameStarted = false;
     startButton.style.display = 'none';
+    // Reset button styles
+    startButton.style.position = '';
+    startButton.style.left = '';
+    startButton.style.bottom = '';
+    startButton.style.transform = '';
+    startButton.style.width = '';
+    startButton.style.height = '';
+    startButton.style.fontSize = '';
+    startButton.style.padding = '';
+    startButton.style.border = '';
+    startButton.style.backgroundColor = '';
+    startButton.style.color = '';
+    startButton.style.cursor = '';
+    
     car = new Car();
     track = new Track();
     startTime = null;
@@ -261,6 +275,14 @@ function initCarRaceGame() {
         startButton.style.left = '50%';
         startButton.style.bottom = '20px';
         startButton.style.transform = 'translateX(-50%)';
+        startButton.style.width = '150px';
+        startButton.style.height = '40px';
+        startButton.style.fontSize = '18px';
+        startButton.style.padding = '5px 10px';
+        startButton.style.border = 'none';
+        startButton.style.backgroundColor = colors.yellow;
+        startButton.style.color = colors.darkGray;
+        startButton.style.cursor = 'pointer';
       }
     }
   }
@@ -278,23 +300,4 @@ function initCarRaceGame() {
     ctx.fillText('Click "Start Game" to begin', canvas.width / 2, 200);
 
     ctx.fillStyle = colors.darkGray;
-    ctx.fillRect(0, 0, canvas.width, 40);
-    ctx.font = 'bold 24px Arial';
-    ctx.fillStyle = colors.white;
-    ctx.textAlign = 'center';
-    ctx.fillText('CAR ON SALE', canvas.width / 2, 28);
-  }
-
-  // Initial setup
-  startButton.onclick = startGame;
-  draw(); // Initial draw to show the menu
-}
-
-// Call the initialization function when the script loads
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM fully loaded and parsed');
-  initCarRaceGame();
-});
-
-// Add this line for debugging
-console.log('Script loaded');
+    ctx.fillRect(0, 0,
