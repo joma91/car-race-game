@@ -202,6 +202,7 @@ function initCarRaceGame() {
   document.addEventListener('keyup', (e) => keys[e.code] = false);
 
   function startGame() {
+    console.log('Starting game...');
     gameState = 'playing';
     gameStarted = false;
     startButton.style.display = 'none';
@@ -225,54 +226,71 @@ function initCarRaceGame() {
   }
 
   function draw() {
-    track.draw();
-    car.draw();
+    console.log('Drawing...');
+    if (gameState === 'menu') {
+      drawMenu();
+    } else {
+      track.draw();
+      car.draw();
+
+      ctx.fillStyle = colors.white;
+      ctx.font = '20px Arial';
+      ctx.fillText(`Lap: ${car.lap}/3`, 10, 70);
+      ctx.fillText(`Time: ${gameStarted ? currentTime.toFixed(2) : '0.00'}s`, 10, 100);
+
+      ctx.fillStyle = colors.darkGray;
+      ctx.fillRect(0, 0, canvas.width, 40);
+      ctx.font = 'bold 24px Arial';
+      ctx.fillStyle = colors.white;
+      ctx.fillText('CAR ON SALE', 270, 28);
+
+      if (gameState === 'finished') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = colors.white;
+        ctx.font = '40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Race Finished!', canvas.width / 2, 180);
+        ctx.font = '30px Arial';
+        ctx.fillText(`Total Time: ${finalTime.toFixed(2)}s`, canvas.width / 2, 230);
+        ctx.textAlign = 'left';
+
+        startButton.style.display = 'block';
+        startButton.textContent = 'Play Again';
+      }
+    }
+  }
+
+  function drawMenu() {
+    ctx.fillStyle = colors.darkGray;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = colors.white;
+    ctx.font = 'bold 40px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Car Race Game', canvas.width / 2, 150);
+
     ctx.font = '20px Arial';
-    ctx.fillText(`Lap: ${car.lap}/3`, 10, 70);
-    ctx.fillText(`Time: ${gameStarted ? currentTime.toFixed(2) : '0.00'}s`, 10, 100);
+    ctx.fillText('Click "Start Game" to begin', canvas.width / 2, 200);
 
     ctx.fillStyle = colors.darkGray;
     ctx.fillRect(0, 0, canvas.width, 40);
     ctx.font = 'bold 24px Arial';
     ctx.fillStyle = colors.white;
-    ctx.fillText('CAR ON SALE', 270, 28);
-   
-    if (gameState === 'menu') {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(200, 100, 300, 120);
-      ctx.fillStyle = colors.white;
-      ctx.font = '16px Arial';
-      ctx.fillText('Controls:', 220, 130);
-      ctx.fillText('Accelerate: Up Arrow', 220, 160);
-      ctx.fillText('Brake: Down Arrow', 220, 185);
-      ctx.fillText('Steer: Left/Right Arrows', 220, 210);
-    }
-
-    if (gameState === 'finished') {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = colors.white;
-      ctx.font = '40px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('Race Finished!', canvas.width / 2, 180);
-      ctx.font = '30px Arial';
-      ctx.fillText(`Total Time: ${finalTime.toFixed(2)}s`, canvas.width / 2, 230);
-      ctx.textAlign = 'left';
-
-      startButton.style.display = 'block';
-      startButton.textContent = 'Play Again';
-    }
+    ctx.textAlign = 'center';
+    ctx.fillText('CAR ON SALE', canvas.width / 2, 28);
   }
 
   // Initial setup
-  track = new Track();
-  draw();
-
-  // Ensure the startButton is properly set up
   startButton.onclick = startGame;
+  draw(); // Initial draw to show the menu
 }
 
 // Call the initialization function when the script loads
-window.onload = initCarRaceGame;
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM fully loaded and parsed');
+  initCarRaceGame();
+});
+
+// Add this line for debugging
+console.log('Script loaded');
