@@ -3,10 +3,6 @@ function initCarRaceGame() {
   const ctx = canvas.getContext('2d');
   const startButton = document.getElementById('startButton');
 
-  // Adjust canvas size to fit viewport
-  canvas.width = Math.min(700, window.innerWidth - 20);
-  canvas.height = Math.min(400, window.innerHeight - 20);
-
   // Colors from CarOnSale branding
   const colors = {
     yellow: '#FFD452',
@@ -31,8 +27,8 @@ function initCarRaceGame() {
   // Car object
   class Car {
     constructor() {
-      this.x = canvas.width / 2;
-      this.y = canvas.height * 0.8;
+      this.x = 375;
+      this.y = 320;
       this.angle = 0;
       this.speed = 0;
       this.lap = 1;
@@ -62,7 +58,7 @@ function initCarRaceGame() {
         this.speed = 0;
       }
 
-      if (this.x > canvas.width * 0.45 && this.x < canvas.width * 0.55 && this.y > canvas.height * 0.75 && this.y < canvas.height * 0.85) {
+      if (this.x > 350 && this.x < 400 && this.y > 300 && this.y < 340) {
         if (this.checkpoint === 1) {
           if (this.lap < 3) {
             this.lap++;
@@ -72,18 +68,14 @@ function initCarRaceGame() {
           }
         }
         this.checkpoint = 0;
-      } else if (this.x > canvas.width * 0.85 && this.y > canvas.height * 0.35 && this.y < canvas.height * 0.5) {
+      } else if (this.x > 600 && this.y > 150 && this.y < 200) {
         this.checkpoint = 1;
       }
     }
 
     isOnTrack(x, y) {
-      const outerMargin = 0.08;
-      const innerMargin = 0.15;
-      return (x > canvas.width * outerMargin && x < canvas.width * (1 - outerMargin) &&
-              y > canvas.height * outerMargin && y < canvas.height * (1 - outerMargin)) &&
-             !(x > canvas.width * innerMargin && x < canvas.width * (1 - innerMargin) &&
-               y > canvas.height * innerMargin && y < canvas.height * (1 - innerMargin));
+      return (x > 55 && x < 645 && y > 55 && y < 345) && 
+             !(x > 105 && x < 595 && y > 105 && y < 295);
     }
 
     draw() {
@@ -118,19 +110,11 @@ function initCarRaceGame() {
   // Track object
   class Track {
     constructor() {
-      const margin = 0.15;
       this.innerPoints = [
-        [canvas.width * margin, canvas.height * margin],
-        [canvas.width * (1 - margin), canvas.height * margin],
-        [canvas.width * (1 - margin), canvas.height * (1 - margin)],
-        [canvas.width * margin, canvas.height * (1 - margin)]
+        [105, 105], [595, 105], [595, 295], [105, 295]
       ];
-      const outerMargin = 0.08;
       this.outerPoints = [
-        [canvas.width * outerMargin, canvas.height * outerMargin],
-        [canvas.width * (1 - outerMargin), canvas.height * outerMargin],
-        [canvas.width * (1 - outerMargin), canvas.height * (1 - outerMargin)],
-        [canvas.width * outerMargin, canvas.height * (1 - outerMargin)]
+        [55, 55], [645, 55], [645, 345], [55, 345]
       ];
     }
 
@@ -162,26 +146,26 @@ function initCarRaceGame() {
       ctx.strokeStyle = colors.white;
       ctx.setLineDash([20, 20]);
       ctx.beginPath();
-      ctx.moveTo(canvas.width * 0.11, canvas.height * 0.11);
-      ctx.lineTo(canvas.width * 0.89, canvas.height * 0.11);
-      ctx.lineTo(canvas.width * 0.89, canvas.height * 0.89);
-      ctx.lineTo(canvas.width * 0.11, canvas.height * 0.89);
+      ctx.moveTo(80, 80);
+      ctx.lineTo(620, 80);
+      ctx.lineTo(620, 320);
+      ctx.lineTo(80, 320);
       ctx.closePath();
       ctx.stroke();
       ctx.setLineDash([]);
 
-      const squareSize = canvas.width * 0.014;
+      const squareSize = 10;
       for (let i = 0; i < 4; i++) {
         for (let j = 0; j < 5; j++) {
           ctx.fillStyle = (i + j) % 2 === 0 ? colors.white : colors.darkGray;
-          ctx.fillRect(canvas.width * 0.5 + j * squareSize, canvas.height * 0.75 + i * squareSize, squareSize, squareSize);
+          ctx.fillRect(350 + j * squareSize, 300 + i * squareSize, squareSize, squareSize);
         }
       }
     }
 
     drawBrickWall(points) {
-      const brickHeight = canvas.height * 0.025;
-      const brickWidth = canvas.width * 0.028;
+      const brickHeight = 10;
+      const brickWidth = 20;
 
       for (let i = 0; i < points.length; i++) {
         const [x1, y1] = points[i];
@@ -250,36 +234,33 @@ function initCarRaceGame() {
       car.draw();
 
       ctx.fillStyle = colors.white;
-      ctx.font = `${canvas.height * 0.05}px Arial`;
-      ctx.fillText(`Lap: ${car.lap}/3`, canvas.width * 0.02, canvas.height * 0.17);
-      ctx.fillText(`Time: ${gameStarted ? currentTime.toFixed(2) : '0.00'}s`, canvas.width * 0.02, canvas.height * 0.25);
+      ctx.font = '20px Arial';
+      ctx.fillText(`Lap: ${car.lap}/3`, 10, 70);
+      ctx.fillText(`Time: ${gameStarted ? currentTime.toFixed(2) : '0.00'}s`, 10, 100);
 
       ctx.fillStyle = colors.darkGray;
-      ctx.fillRect(0, 0, canvas.width, canvas.height * 0.1);
-      ctx.font = `bold ${canvas.height * 0.06}px Arial`;
+      ctx.fillRect(0, 0, canvas.width, 40);
+      ctx.font = 'bold 24px Arial';
       ctx.fillStyle = colors.white;
-      ctx.textAlign = 'center';
-      ctx.fillText('CAR ON SALE', canvas.width / 2, canvas.height * 0.07);
-      ctx.textAlign = 'left';
+      ctx.fillText('CAR ON SALE', 270, 28);
 
       if (gameState === 'finished') {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = colors.white;
-        ctx.font = `${canvas.height * 0.1}px Arial`;
+        ctx.font = '40px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Race Finished!', canvas.width / 2, canvas.height * 0.4);
-        ctx.font = `${canvas.height * 0.075}px Arial`;
-        ctx.fillText(`Total Time: ${finalTime.toFixed(2)}s`, canvas.width / 2, canvas.height * 0.55);
+        ctx.fillText('Race Finished!', canvas.width / 2, 180);
+        ctx.font = '30px Arial';
+        ctx.fillText(`Total Time: ${finalTime.toFixed(2)}s`, canvas.width / 2, 230);
         ctx.textAlign = 'left';
 
         startButton.style.display = 'block';
         startButton.textContent = 'Play Again';
-        // Adjust button position
         startButton.style.position = 'absolute';
         startButton.style.left = '50%';
-        startButton.style.top = '75%';
-        startButton.style.transform = 'translate(-50%, -50%)';
+        startButton.style.bottom = '20px';
+        startButton.style.transform = 'translateX(-50%)';
       }
     }
   }
@@ -289,19 +270,19 @@ function initCarRaceGame() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = colors.white;
-    ctx.font = `bold ${canvas.height * 0.1}px Arial`;
+    ctx.font = 'bold 40px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Car Race Game', canvas.width / 2, canvas.height * 0.4);
+    ctx.fillText('Car Race Game', canvas.width / 2, 150);
 
-    ctx.font = `${canvas.height * 0.05}px Arial`;
-    ctx.fillText('Click "Start Game" to begin', canvas.width / 2, canvas.height * 0.5);
+    ctx.font = '20px Arial';
+    ctx.fillText('Click "Start Game" to begin', canvas.width / 2, 200);
 
     ctx.fillStyle = colors.darkGray;
-    ctx.fillRect(0, 0, canvas.width, canvas.height * 0.1);
-    ctx.font = `bold ${canvas.height * 0.06}px Arial`;
+    ctx.fillRect(0, 0, canvas.width, 40);
+    ctx.font = 'bold 24px Arial';
     ctx.fillStyle = colors.white;
     ctx.textAlign = 'center';
-    ctx.fillText('CAR ON SALE', canvas.width / 2, canvas.height * 0.07);
+    ctx.fillText('CAR ON SALE', canvas.width / 2, 28);
   }
 
   // Initial setup
