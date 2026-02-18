@@ -257,10 +257,7 @@ function initCarRaceGame() {
 
         startButton.style.display = 'block';
         startButton.textContent = 'Play Again';
-        startButton.style.position = 'absolute';
-        startButton.style.left = '50%';
-        startButton.style.bottom = '20px';
-        startButton.style.transform = 'translateX(-50%)';
+        positionButton(startButton);
       }
     }
   }
@@ -285,8 +282,18 @@ function initCarRaceGame() {
     ctx.fillText('CAR ON SALE', canvas.width / 2, 28);
   }
 
+  function positionButton(button) {
+    button.style.position = 'absolute';
+    button.style.left = '50%';
+    button.style.bottom = '20px';
+    button.style.transform = 'translateX(-50%)';
+    button.style.padding = '10px 20px';
+    button.style.fontSize = '16px';
+  }
+
   // Initial setup
   startButton.onclick = startGame;
+  positionButton(startButton);
   draw(); // Initial draw to show the menu
 }
 
