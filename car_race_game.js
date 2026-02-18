@@ -7,6 +7,11 @@ document.addEventListener('DOMContentLoaded', function() {
     startButton = document.getElementById('startButton');
     playAgainButton = document.getElementById('playAgainButton');
 
+    if (!canvas || !ctx) {
+        console.error('Canvas or context not found');
+        return;
+    }
+
     startButton.onclick = startGame;
     playAgainButton.onclick = resetGame;
 
@@ -17,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function drawMenuScreen() {
+    console.log('Drawing menu screen');
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'white';
@@ -42,8 +48,8 @@ function startGame() {
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
 
+    console.log('Starting game loop');
     gameLoop();
-    console.log('Game loop started');
 }
 
 function resetGame() {
@@ -52,8 +58,12 @@ function resetGame() {
 }
 
 function gameLoop() {
-    if (!gameRunning) return;
+    if (!gameRunning) {
+        console.log('Game not running, exiting game loop');
+        return;
+    }
 
+    console.log('Game loop iteration');
     update();
     draw();
     requestAnimationFrame(gameLoop);
@@ -74,6 +84,7 @@ function update() {
 }
 
 function draw() {
+    console.log('Drawing frame');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     track.draw();
     car.draw();
