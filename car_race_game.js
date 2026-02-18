@@ -282,16 +282,28 @@ function initCarRaceGame() {
     ctx.fillText('CAR ON SALE', canvas.width / 2, 28);
   }
 
-  function positionButton(button) {
+ function positionButton(button) {
   button.style.position = 'absolute';
   button.style.left = '50%';
   button.style.bottom = '10px';
   button.style.transform = 'translateX(-50%)';
-  button.style.padding = '8px 16px';
+  
+  // Wichtig: Explizite Größen und Resets
+  button.style.width = '180px';       // Feste Breite statt auto
+  button.style.height = '44px';       // Feste Höhe statt auto
+  button.style.minWidth = '0';        // Verhindert Erben von Mindestbreiten
+  button.style.minHeight = '0';       // Verhindert Erben von Mindesthöhen
+  
+  // Styling
+  button.style.padding = '0';         // Da Höhe/Breite fix sind, Padding auf 0
   button.style.fontSize = '16px';
-  button.style.width = 'auto';
-  button.style.height = 'auto';
-  }
+  button.style.display = 'flex';      // Zentriert den Text im Button perfekt
+  button.style.alignItems = 'center';
+  button.style.justifyContent = 'center';
+  
+  // Falls Product Fruits aggressive Styles hat:
+  button.style.boxSizing = 'border-box';
+}
 
   // Initial setup
   startButton.onclick = startGame;
@@ -307,4 +319,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Add this line for debugging
 console.log('Script loaded');
+
 
