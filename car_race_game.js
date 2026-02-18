@@ -283,12 +283,14 @@ function initCarRaceGame() {
   }
 
   function positionButton(button) {
-    button.style.position = 'absolute';
-    button.style.left = '50%';
-    button.style.bottom = '20px';
-    button.style.transform = 'translateX(-50%)';
-    button.style.padding = '10px 20px';
-    button.style.fontSize = '16px';
+  button.style.position = 'absolute';
+  button.style.left = '50%';
+  button.style.bottom = '10px';
+  button.style.transform = 'translateX(-50%)';
+  button.style.padding = '8px 16px';
+  button.style.fontSize = '16px';
+  button.style.width = 'auto';
+  button.style.height = 'auto';
   }
 
   // Initial setup
@@ -305,3 +307,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Add this line for debugging
 console.log('Script loaded');
+
