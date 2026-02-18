@@ -255,7 +255,7 @@ function initCarRaceGame() {
         ctx.fillText(`Total Time: ${finalTime.toFixed(2)}s`, canvas.width / 2, 230);
         ctx.textAlign = 'left';
 
-        startButton.style.display = 'block';
+        startButton.style.display = 'flex';
         startButton.textContent = 'Play Again';
         positionButton(startButton);
       }
@@ -283,26 +283,35 @@ function initCarRaceGame() {
   }
 
  function positionButton(button) {
+  // Verhindert, dass der Button das Layout der Seite sprengt
   button.style.position = 'absolute';
+  
+  // Horizontale Zentrierung
   button.style.left = '50%';
-  button.style.bottom = '10px';
   button.style.transform = 'translateX(-50%)';
   
-  // Wichtig: Explizite Größen und Resets
-  button.style.width = '180px';       // Feste Breite statt auto
-  button.style.height = '44px';       // Feste Höhe statt auto
-  button.style.minWidth = '0';        // Verhindert Erben von Mindestbreiten
-  button.style.minHeight = '0';       // Verhindert Erben von Mindesthöhen
+  // EXAKTE Positionierung: 10px über dem unteren Rand des #gameWrapper
+  button.style.bottom = '10px'; 
+  button.style.top = 'auto'; // Wichtig, falls vorher ein 'top' gesetzt wurde
   
-  // Styling
-  button.style.padding = '0';         // Da Höhe/Breite fix sind, Padding auf 0
-  button.style.fontSize = '16px';
-  button.style.display = 'flex';      // Zentriert den Text im Button perfekt
+  // Fixe Größe gegen "Riesendarstellung"
+  button.style.width = '180px';
+  button.style.height = '44px';
+  button.style.boxSizing = 'border-box';
+  
+  // Inhalt zentrieren
+  button.style.display = 'flex';
   button.style.alignItems = 'center';
   button.style.justifyContent = 'center';
   
-  // Falls Product Fruits aggressive Styles hat:
-  button.style.boxSizing = 'border-box';
+  // Optik (CarOnSale Farben aus deiner Liste)
+  button.style.backgroundColor = '#FFD452'; // yellow
+  button.style.color = '#2F343E';           // darkGray
+  button.style.border = 'none';
+  button.style.borderRadius = '4px';
+  button.style.cursor = 'pointer';
+  button.style.fontSize = '16px';
+  button.style.fontWeight = 'bold';
 }
 
   // Initial setup
@@ -319,5 +328,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Add this line for debugging
 console.log('Script loaded');
+
 
 
