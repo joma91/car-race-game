@@ -17,13 +17,13 @@ async function supabaseFetch(path, options = {}) {
 
 function getWeekStart() {
   const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const mez = new Date(utc + 3600000);
-  const day = mez.getDay();
-  const diff = (day === 0 ? -6 : 1 - day);
-  mez.setDate(mez.getDate() + diff);
-  mez.setHours(0, 0, 0, 0);
-  return new Date(mez.getTime() - 3600000).toISOString();
+  const day = now.getUTCDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const monday = new Date(now);
+  monday.setUTCDate(now.getUTCDate() + diff);
+  monday.setUTCHours(0, 0, 0, 0);
+  monday.setUTCHours(monday.getUTCHours() - 1);
+  return monday.toISOString();
 }
 
 function getWeekNumber(date) {
@@ -42,9 +42,12 @@ async function saveScore(username, timeSeconds) {
 }
 
 async function loadLeaderboard() {
+  const weekStart = getWeekStart();
+  console.log('Lade Bestenliste ab:', weekStart);
   const data = await supabaseFetch(
-    `/rest/v1/scores?select=username,time_seconds&order=time_seconds.asc&limit=10`
+    `/rest/v1/scores?select=username,time_seconds&created_at=gte.${weekStart}&order=time_seconds.asc&limit=10`
   );
+  console.log('Ergebnis:', data);
   return Array.isArray(data) ? data : [];
 }
 
@@ -84,31 +87,22 @@ function initCarRaceGame() {
   let showLeaderboard = false;
   let username = localStorage.getItem('cos_username') || null;
   let inputActive = false;
-  let fontReady = false;
 
-  // ── Font laden ────────────────────────────────
-  // Warte auf Font, dann erst zeichnen
+  // ── Font Check ────────────────────────────────
   function waitForFont(cb) {
     const testFont = '8px "Press Start 2P"';
     const testText = 'CarOnSale';
-    const canvas2 = document.createElement('canvas');
-    canvas2.width = 200; canvas2.height = 30;
-    const ctx2 = canvas2.getContext('2d');
-
+    const c2 = document.createElement('canvas');
+    c2.width = 200; c2.height = 30;
+    const ctx2 = c2.getContext('2d');
     ctx2.font = '8px monospace';
     const fallbackWidth = ctx2.measureText(testText).width;
-
     let attempts = 0;
     const check = () => {
       ctx2.font = testFont;
       const w = ctx2.measureText(testText).width;
-      if (w !== fallbackWidth || attempts > 30) {
-        fontReady = true;
-        cb();
-      } else {
-        attempts++;
-        setTimeout(check, 100);
-      }
+      if (w !== fallbackWidth || attempts > 30) { cb(); }
+      else { attempts++; setTimeout(check, 100); }
     };
     check();
   }
@@ -151,45 +145,81 @@ function initCarRaceGame() {
         </div>
       `;
       document.body.appendChild(overlay);
-
       const input = overlay.querySelector('#usernameInput');
       const btn = overlay.querySelector('#usernameConfirm');
       const err = overlay.querySelector('#usernameError');
-
       setTimeout(() => input.focus(), 100);
-
-      // Wichtig: stopPropagation verhindert dass Spiel-Keys den Input stören
-      input.addEventListener('keydown', e => {
-        e.stopPropagation();
-        if (e.key === 'Enter') doConfirm();
-      });
+      input.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') doConfirm(); });
       input.addEventListener('keyup', e => e.stopPropagation());
       input.addEventListener('keypress', e => e.stopPropagation());
-
       function doConfirm() {
         const val = input.value.trim().toUpperCase();
-        if (!val || val.length < 2) {
-          err.textContent = 'Mind. 2 Zeichen!';
-          input.focus();
-          return;
-        }
+        if (!val || val.length < 2) { err.textContent = 'Mind. 2 Zeichen!'; input.focus(); return; }
         localStorage.setItem('cos_username', val);
         document.body.removeChild(overlay);
         inputActive = false;
         resolve(val);
       }
-
       btn.onclick = doConfirm;
     });
   }
 
   // ── Leaderboard Seite ─────────────────────────
   function showLeaderboardPage() {
-  // Bestenliste ist bereits im Canvas sichtbar – Button macht nichts extra nötig
-  // Stattdessen: falls noch nicht sichtbar, einblenden
-  showLeaderboard = true;
-  draw();
-}
+    const w = window.open('', '_blank');
+    const kw = getWeekNumber(new Date());
+    const rows = leaderboard.length === 0
+      ? `<tr><td colspan="3" style="text-align:center;color:#474B57;padding:32px;">Noch keine Einträge diese Woche</td></tr>`
+      : leaderboard.map((e, i) => {
+          const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+          const hl = e.username === username ? 'background:rgba(255,212,82,0.12);' : '';
+          return `<tr style="${hl}">
+            <td style="color:${i<3?'#FFD452':'#474B57'};padding:12px 16px;">${medal}</td>
+            <td style="color:${e.username===username?'#FFD452':'#fff'};padding:12px 16px;">${e.username}</td>
+            <td style="color:#BAC5E5;padding:12px 16px;text-align:right;">${Number(e.time_seconds).toFixed(2)}s</td>
+          </tr>`;
+        }).join('');
+    w.document.write(`<!DOCTYPE html>
+<html lang="de"><head>
+  <meta charset="UTF-8">
+  <title>CarOnSale Race – Top 10 KW${kw}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:#1a1d24;color:#fff;font-family:'Press Start 2P',monospace;
+         display:flex;flex-direction:column;align-items:center;
+         justify-content:center;min-height:100vh;padding:40px 20px;}
+    .card{background:#2F343E;border:2px solid #FFD452;
+          box-shadow:0 0 30px rgba(255,212,82,0.3);
+          padding:40px;max-width:560px;width:100%;}
+    h1{color:#FFD452;font-size:14px;text-align:center;margin-bottom:8px;
+       text-shadow:0 0 12px rgba(255,212,82,0.6);}
+    .sub{color:#474B57;font-size:7px;text-align:center;margin-bottom:32px;}
+    table{width:100%;border-collapse:collapse;font-size:9px;}
+    thead tr{border-bottom:1px solid #FFD452;}
+    thead th{color:#FFD452;padding:8px 16px;text-align:left;font-size:7px;}
+    thead th:last-child{text-align:right;}
+    tbody tr{border-bottom:1px solid rgba(255,255,255,0.05);}
+    tbody tr:hover{background:rgba(255,255,255,0.04);}
+    .hint{margin-top:28px;color:#474B57;font-size:6px;text-align:center;line-height:2.2;}
+    .back{display:block;margin-top:20px;text-align:center;color:#474B57;
+          font-size:7px;cursor:pointer;text-decoration:none;}
+    .back:hover{color:#FFD452;}
+  </style>
+</head><body>
+  <div class="card">
+    <h1>WEEK TOP 10</h1>
+    <p class="sub">KW ${kw} · Montag 00:00 – Sonntag 23:59 MEZ</p>
+    <table>
+      <thead><tr><th>RANG</th><th>FAHRER</th><th>ZEIT</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p class="hint">Bestenliste wird jeden Montag um 00:00 MEZ zurückgesetzt</p>
+    <a class="back" onclick="window.close()">← zurück zum Spiel</a>
+  </div>
+</body></html>`);
+    w.document.close();
+  }
 
   // ── Speedometer ───────────────────────────────
   function drawSpeedometer(speed) {
@@ -223,25 +253,17 @@ function initCarRaceGame() {
   // ── Particles ─────────────────────────────────
   function spawnParticles(x, y, color, count) {
     for (let i = 0; i < count; i++) {
-      particles.push({ x, y,
-        vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4,
-        life: 1, color });
+      particles.push({ x, y, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4, life: 1, color });
     }
   }
   function updateParticles() {
     particles = particles.filter(p => p.life > 0);
-    for (let p of particles) {
-      p.x += p.vx; p.y += p.vy;
-      p.life -= 0.04; p.vx *= 0.95; p.vy *= 0.95;
-    }
+    for (let p of particles) { p.x+=p.vx; p.y+=p.vy; p.life-=0.04; p.vx*=0.95; p.vy*=0.95; }
   }
   function drawParticles() {
     for (let p of particles) {
-      ctx.save();
-      ctx.globalAlpha = p.life;
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x-2, p.y-2, 4, 4);
-      ctx.restore();
+      ctx.save(); ctx.globalAlpha=p.life; ctx.fillStyle=p.color;
+      ctx.fillRect(p.x-2, p.y-2, 4, 4); ctx.restore();
     }
   }
 
@@ -249,39 +271,35 @@ function initCarRaceGame() {
   class Car {
     constructor() {
       this.x=375; this.y=320; this.angle=0; this.speed=0;
-      this.lap=1; this.checkpoint=0;
-      this.boosting=false; this.boostCooldown=0;
+      this.lap=1; this.checkpoint=0; this.boosting=false; this.boostCooldown=0;
     }
     update() {
       if (!gameStarted && (keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight'])) {
-        gameStarted = true; startTime = Date.now();
+        gameStarted=true; startTime=Date.now();
       }
       const accel = this.boosting ? 0.4 : 0.2;
       if (keys['ArrowUp']) this.speed += accel;
       if (keys['ArrowDown']) this.speed -= 0.15;
       if (keys['Space'] && this.boostCooldown <= 0) {
-        this.boosting = true; this.boostCooldown = 120;
+        this.boosting=true; this.boostCooldown=120;
         spawnParticles(this.x, this.y, colors.yellow, 8);
       }
-      if (this.boosting && this.boostCooldown < 100) this.boosting = false;
+      if (this.boosting && this.boostCooldown < 100) this.boosting=false;
       if (this.boostCooldown > 0) this.boostCooldown--;
       this.speed = Math.max(-3, Math.min(this.boosting?10:7, this.speed));
       const tr = 0.045 + Math.abs(this.speed)*0.002;
-      if (keys['ArrowLeft']) this.angle -= tr * Math.sign(this.speed);
-      if (keys['ArrowRight']) this.angle += tr * Math.sign(this.speed);
+      if (keys['ArrowLeft']) this.angle -= tr*Math.sign(this.speed);
+      if (keys['ArrowRight']) this.angle += tr*Math.sign(this.speed);
       this.speed *= 0.97;
-      const newX = this.x + Math.cos(this.angle)*this.speed;
-      const newY = this.y + Math.sin(this.angle)*this.speed;
+      const newX = this.x+Math.cos(this.angle)*this.speed;
+      const newY = this.y+Math.sin(this.angle)*this.speed;
       if (this.isOnTrack(newX, newY)) {
         if (Math.abs(this.speed)>3 && (keys['ArrowLeft']||keys['ArrowRight'])) {
           skidMarks.push({x:this.x, y:this.y, life:1});
           if (skidMarks.length>200) skidMarks.shift();
         }
         this.x=newX; this.y=newY;
-      } else {
-        spawnParticles(this.x, this.y, colors.brickRed, 4);
-        this.speed *= -0.3;
-      }
+      } else { spawnParticles(this.x, this.y, colors.brickRed, 4); this.speed*=-0.3; }
       if (this.x>350&&this.x<400&&this.y>300&&this.y<340) {
         if (this.checkpoint===1) {
           if (this.lap<3) { this.lap++; spawnParticles(this.x,this.y,colors.yellow,20); }
@@ -291,7 +309,7 @@ function initCarRaceGame() {
       } else if (this.x>600&&this.y>150&&this.y<200) { this.checkpoint=1; }
     }
     isOnTrack(x,y) {
-      return (x>55&&x<645&&y>55&&y<345) && !(x>105&&x<595&&y>105&&y<295);
+      return (x>55&&x<645&&y>55&&y<345)&&!(x>105&&x<595&&y>105&&y<295);
     }
     draw() {
       ctx.save(); ctx.translate(this.x+3,this.y+4); ctx.rotate(this.angle);
@@ -337,13 +355,11 @@ function initCarRaceGame() {
       for (let pt of this.innerPoints) ctx.lineTo(pt[0],pt[1]);
       ctx.closePath(); ctx.fill();
       for (let s of skidMarks) {
-        ctx.save(); ctx.globalAlpha=s.life*0.35;
-        ctx.fillStyle='#111'; ctx.fillRect(s.x-2,s.y-2,4,4);
-        ctx.restore(); s.life-=0.003;
+        ctx.save(); ctx.globalAlpha=s.life*0.35; ctx.fillStyle='#111';
+        ctx.fillRect(s.x-2,s.y-2,4,4); ctx.restore(); s.life-=0.003;
       }
       skidMarks=skidMarks.filter(s=>s.life>0);
-      this.drawBrickWall(this.outerPoints);
-      this.drawBrickWall(this.innerPoints);
+      this.drawBrickWall(this.outerPoints); this.drawBrickWall(this.innerPoints);
       ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.setLineDash([15,15]); ctx.lineWidth=2;
       ctx.beginPath(); ctx.moveTo(80,80); ctx.lineTo(620,80);
       ctx.lineTo(620,320); ctx.lineTo(80,320); ctx.closePath(); ctx.stroke();
@@ -410,23 +426,20 @@ function initCarRaceGame() {
 
   // ── Nach Rennende ─────────────────────────────
   async function onRaceFinished(time) {
-  startButton.style.display = 'none';
-  buttonRow.style.display = 'flex';
-
-  if (!username) username = await getUsername();
-
-  const myTime = Math.round(time * 1000) / 1000;
-
-  try {
-    await saveScore(username, myTime);
-    leaderboard = await loadLeaderboard();
-  } catch(e) {
-    leaderboard = [{ username: username, time_seconds: myTime }];
+    startButton.style.display = 'none';
+    buttonRow.style.display = 'flex';
+    if (!username) username = await getUsername();
+    const myTime = Math.round(time * 1000) / 1000;
+    try {
+      await saveScore(username, myTime);
+      leaderboard = await loadLeaderboard();
+    } catch(e) {
+      console.error('Fehler:', e);
+      leaderboard = [{ username: username, time_seconds: myTime }];
+    }
+    showLeaderboard = true;
+    draw();
   }
-
-  showLeaderboard = true;
-  draw(); // Explizit neu zeichnen NACHDEM leaderboard gefüllt ist
-}
 
   // ── HUD ───────────────────────────────────────
   function drawHUD() {
@@ -446,7 +459,6 @@ function initCarRaceGame() {
     ctx.font='9px "Press Start 2P"';
     ctx.fillText(`${gameStarted?currentTime.toFixed(2):'0.00'}s`,canvas.width-10,22);
     drawSpeedometer(car.speed);
-    // NOS Tank
     const bp=1-Math.min(car.boostCooldown/120,1);
     const tx=610,ty=345,tw=12,th=60;
     ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(tx-2,ty-th-2,tw+4,th+4);
@@ -485,54 +497,40 @@ function initCarRaceGame() {
 
   // ── Leaderboard Canvas Overlay ─────────────────
   function drawLeaderboardOverlay() {
-  // Box groß genug für 10 Einträge
-  ctx.fillStyle = 'rgba(0,0,0,0.92)';
-  ctx.fillRect(80, 45, 540, 330);
-  ctx.strokeStyle = colors.yellow;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(80, 45, 540, 330);
+    ctx.fillStyle='rgba(0,0,0,0.92)';
+    ctx.fillRect(60,48,580,290);
+    ctx.strokeStyle=colors.yellow; ctx.lineWidth=2;
+    ctx.strokeRect(60,48,580,290);
 
-  ctx.font = '10px "Press Start 2P"';
-  ctx.fillStyle = colors.yellow;
-  ctx.textAlign = 'center';
-  ctx.shadowColor = colors.yellow;
-  ctx.shadowBlur = 8;
-  ctx.fillText('WEEK TOP 10', canvas.width / 2, 68);
-  ctx.shadowBlur = 0;
+    ctx.font='9px "Press Start 2P"'; ctx.fillStyle=colors.yellow;
+    ctx.textAlign='center'; ctx.shadowColor=colors.yellow; ctx.shadowBlur=8;
+    ctx.fillText('WEEK TOP 10',canvas.width/2,68); ctx.shadowBlur=0;
 
-  ctx.font = '6px "Press Start 2P"';
-  ctx.fillStyle = colors.lightBlue;
-  ctx.fillText(`KW ${getWeekNumber(new Date())} · Mo–So MEZ`, canvas.width / 2, 82);
+    ctx.font='6px "Press Start 2P"'; ctx.fillStyle=colors.lightBlue;
+    ctx.fillText(`KW ${getWeekNumber(new Date())} · Mo–So MEZ`,canvas.width/2,82);
 
-  if (leaderboard.length === 0) {
-    ctx.font = '7px "Press Start 2P"';
-    ctx.fillStyle = colors.lightGray;
-    ctx.fillText('Noch keine Einträge', canvas.width / 2, 200);
-  } else {
-    leaderboard.forEach((entry, i) => {
-      const y = 100 + i * 26; // 26px pro Zeile, passt für 10 Einträge
-      const isMe = entry.username === username;
-      if (isMe) {
-        ctx.fillStyle = 'rgba(255,212,82,0.15)';
-        ctx.fillRect(88, y - 10, 524, 22);
-      }
-      ctx.font = '7px "Press Start 2P"';
-      ctx.textAlign = 'left';
-      ctx.fillStyle = i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : colors.lightGray;
-      ctx.fillText(String(i + 1).padStart(2, '0'), 96, y + 2);
-      ctx.fillStyle = isMe ? colors.yellow : colors.white;
-      ctx.fillText(entry.username.substring(0, 14), 128, y + 2);
-      ctx.textAlign = 'right';
-      ctx.fillStyle = isMe ? colors.yellow : colors.lightBlue;
-      ctx.fillText(`${Number(entry.time_seconds).toFixed(2)}s`, 604, y + 2);
-    });
+    if (leaderboard.length===0) {
+      ctx.font='7px "Press Start 2P"'; ctx.fillStyle=colors.lightGray;
+      ctx.fillText('Noch keine Einträge',canvas.width/2,190);
+    } else {
+      leaderboard.forEach((entry,i)=>{
+        const y=100+i*19;
+        const isMe=entry.username===username;
+        if(isMe){ctx.fillStyle='rgba(255,212,82,0.15)';ctx.fillRect(68,y-8,564,18);}
+        ctx.font='6px "Press Start 2P"'; ctx.textAlign='left';
+        ctx.fillStyle=i===0?'#FFD700':i===1?'#C0C0C0':i===2?'#CD7F32':colors.lightGray;
+        ctx.fillText(String(i+1).padStart(2,'0'),76,y+2);
+        ctx.fillStyle=isMe?colors.yellow:colors.white;
+        ctx.fillText(entry.username.substring(0,14),110,y+2);
+        ctx.textAlign='right'; ctx.fillStyle=isMe?colors.yellow:colors.lightBlue;
+        ctx.fillText(`${Number(entry.time_seconds).toFixed(2)}s`,628,y+2);
+      });
+    }
+
+    ctx.font='5px "Press Start 2P"'; ctx.fillStyle=colors.lightGray;
+    ctx.textAlign='center';
+    ctx.fillText('↓ Neustart oder Bestenliste',canvas.width/2,330);
   }
-
-  ctx.font = '6px "Press Start 2P"';
-  ctx.fillStyle = colors.lightGray;
-  ctx.textAlign = 'center';
-  ctx.fillText('↓ Neustart oder Bestenliste', canvas.width / 2, 365);
-}
 
   // ── Menu ──────────────────────────────────────
   function drawMenu() {
@@ -544,7 +542,6 @@ function initCarRaceGame() {
     ctx.strokeStyle=colors.yellow; ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(0,42); ctx.lineTo(canvas.width,42); ctx.stroke();
     drawHeaderLogo(canvas.width/2,26);
-    // ASCII Logo
     ctx.save(); ctx.shadowColor=colors.yellow; ctx.shadowBlur=14;
     ctx.fillStyle=colors.yellow; ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
     ["  ___          ___      ___      _      ",
@@ -553,11 +550,9 @@ function initCarRaceGame() {
      " \\___\\__,_|  \\___/|_||_|___/\\__,_|_\\___|"
     ].forEach((l,i)=>ctx.fillText(l,canvas.width/2,78+i*17));
     ctx.restore();
-    // Race Game Titel
     ctx.save(); ctx.shadowColor=colors.lightBlue; ctx.shadowBlur=6;
     ctx.font='13px "Press Start 2P"'; ctx.fillStyle=colors.white; ctx.textAlign='center';
     ctx.fillText('R A C E  G A M E',canvas.width/2,162); ctx.restore();
-    // Trennlinie
     ctx.strokeStyle=colors.yellow; ctx.lineWidth=1; ctx.setLineDash([6,6]);
     ctx.beginPath(); ctx.moveTo(160,176); ctx.lineTo(540,176); ctx.stroke();
     ctx.setLineDash([]);
@@ -566,16 +561,13 @@ function initCarRaceGame() {
     ctx.fillText('3 RUNDEN · BESTZEIT SCHLAGEN',canvas.width/2,195);
     ctx.fillStyle=colors.lightGray;
     ctx.fillText('[ L ]  BESTENLISTE DER WOCHE',canvas.width/2,215);
-    // Controls
     ctx.fillStyle='rgba(255,212,82,0.07)'; ctx.fillRect(210,230,280,86);
     ctx.strokeStyle=colors.yellow; ctx.lineWidth=1; ctx.strokeRect(210,230,280,86);
     ['↑  GAS','↓  BREMSE','← →  LENKEN','SPACE  BOOST'].forEach((c,i)=>{
       ctx.fillStyle=i%2===0?colors.white:colors.lightBlue;
       ctx.fillText(c,canvas.width/2,248+i*17);
     });
-    // Mini Auto
     ctx.save(); ctx.translate(350,340); drawMiniCar(); ctx.restore();
-    // Username
     if(username){
       ctx.font='6px "Press Start 2P"'; ctx.fillStyle=colors.lightGray;
       ctx.textAlign='right';
@@ -608,7 +600,7 @@ function initCarRaceGame() {
 
   // ── Game loop ─────────────────────────────────
   async function startGame() {
-    if(!username) username = await getUsername();
+    if(!username) username=await getUsername();
     gameState='countdown'; gameStarted=false; showLeaderboard=false;
     startButton.style.display='none';
     buttonRow.style.display='none';
@@ -642,22 +634,23 @@ function initCarRaceGame() {
     }
   }
 
-  // Tastatur
   document.addEventListener('keydown', e => {
     if(inputActive) return;
     if((e.key==='l'||e.key==='L')&&gameState==='menu'){
-      loadLeaderboard().then(data=>{leaderboard=data;showLeaderboard=true;gameState='finished';
-        buttonRow.style.display='flex'; startButton.style.display='none'; draw();});
+      loadLeaderboard().then(data=>{
+        leaderboard=data; showLeaderboard=true; gameState='finished';
+        buttonRow.style.display='flex'; startButton.style.display='none';
+        draw();
+      });
     }
     if(e.key==='Enter'&&gameState==='finished') startGame();
   });
 
-  // Button Events
-  startButton.onclick = startGame;
-  btnRestart.onclick = startGame;
-btnLeaderboard.onclick = showLeaderboardPage;
-  // Font-Check Loop: zeichnet erst wenn Pixel-Font bereit ist
-  waitForFont(() => {
+  startButton.onclick=startGame;
+  btnRestart.onclick=startGame;
+  btnLeaderboard.onclick=showLeaderboardPage;
+
+  waitForFont(()=>{
     draw();
     setInterval(()=>{if(gameState==='menu') draw();},50);
   });
