@@ -1,15 +1,53 @@
+// ── Supabase Config ───────────────────────────
+const SUPABASE_URL = 'https://rwuogkjbpnhahdvudxax.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3dW9na2picG5oYWhkdnVkeGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNzI3NzYsImV4cCI6MjA5MzY0ODc3Nn0.ZoNkmUpMivwl3GlHl63qhgRPrQ4nbnsniUCftakRghY';
+
+async function supabaseFetch(path, options = {}) {
+  const res = await fetch(SUPABASE_URL + path, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+  });
+  return res.json();
+}
+
+// Wochenanfang (Montag 00:00 MEZ) als ISO-String
+function getWeekStart() {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const mez = new Date(utc + 3600000); // MEZ = UTC+1 (vereinfacht)
+  const day = mez.getDay(); // 0=So, 1=Mo...
+  const diff = (day === 0 ? -6 : 1 - day);
+  mez.setDate(mez.getDate() + diff);
+  mez.setHours(0, 0, 0, 0);
+  return new Date(mez.getTime() - 3600000).toISOString(); // zurück zu UTC
+}
+
+async function saveScore(username, timeSeconds) {
+  await supabaseFetch('/rest/v1/scores', {
+    method: 'POST',
+    headers: { 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ username, time_seconds: timeSeconds })
+  });
+}
+
+async function loadLeaderboard() {
+  const weekStart = getWeekStart();
+  const data = await supabaseFetch(
+    `/rest/v1/scores?select=username,time_seconds&created_at=gte.${weekStart}&order=time_seconds.asc&limit=10`
+  );
+  return Array.isArray(data) ? data : [];
+}
+
+// ── Game ──────────────────────────────────────
 function initCarRaceGame() {
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
   const startButton = document.getElementById('startButton');
-
-  // CarOnSale ASCII Logo
-  const ASCII_LOGO = [
-    "  ___          ___      ___      _      ",
-    " / __|__ _ _ / _ \\ _ _ / __| __ _| |___ ",
-    "| (__/ _` |  | (_) | ' \\ \\__ \\/ _` | / -_)",
-    " \\___\\__,_|   \\___/|_||_|___/\\__,_|_\\___|"
-  ];
 
   const colors = {
     yellow: '#FFD452',
@@ -33,11 +71,66 @@ function initCarRaceGame() {
   let gameState = 'menu';
   let gameStarted = false;
   let countdown = 0;
-  let countdownTimer = null;
   let skidMarks = [];
   let particles = [];
+  let leaderboard = [];
+  let showLeaderboard = false;
 
-  // ── Speedometer ──────────────────────────────
+  // Username aus localStorage oder null
+  let username = localStorage.getItem('cos_username') || null;
+
+  // ── Username Prompt ────────────────────────────
+  function getUsername() {
+    return new Promise(resolve => {
+      // Overlay
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position:fixed;inset:0;background:rgba(0,0,0,0.85);
+        display:flex;align-items:center;justify-content:center;z-index:999;
+        font-family:'Press Start 2P',monospace;
+      `;
+      overlay.innerHTML = `
+        <div style="background:#2F343E;border:2px solid #FFD452;padding:32px;text-align:center;max-width:360px;width:90%;">
+          <div style="color:#FFD452;font-size:11px;margin-bottom:8px;">CarOnSale Race</div>
+          <div style="color:#fff;font-size:9px;margin-bottom:24px;line-height:1.8;">Wähle deinen Fahrernamen</div>
+          <input id="usernameInput" maxlength="16" placeholder="NAME..." style="
+            width:100%;background:#1a1d24;border:2px solid #FFD452;color:#FFD452;
+            font-family:'Press Start 2P',monospace;font-size:12px;padding:10px;
+            text-align:center;outline:none;margin-bottom:16px;box-sizing:border-box;
+          "/>
+          <div id="usernameError" style="color:#e74c3c;font-size:7px;margin-bottom:12px;min-height:12px;"></div>
+          <button id="usernameConfirm" style="
+            background:#FFD452;color:#2F343E;border:none;
+            font-family:'Press Start 2P',monospace;font-size:10px;
+            padding:12px 24px;cursor:pointer;width:100%;
+            box-shadow:4px 4px 0 #b8951a;
+          ">START</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      const input = overlay.querySelector('#usernameInput');
+      const btn = overlay.querySelector('#usernameConfirm');
+      const err = overlay.querySelector('#usernameError');
+      input.focus();
+
+      const confirm = () => {
+        const val = input.value.trim().toUpperCase();
+        if (!val || val.length < 2) {
+          err.textContent = 'Mind. 2 Zeichen!';
+          return;
+        }
+        localStorage.setItem('cos_username', val);
+        document.body.removeChild(overlay);
+        resolve(val);
+      };
+
+      btn.onclick = confirm;
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') confirm(); });
+    });
+  }
+
+  // ── Speedometer ───────────────────────────────
   function drawSpeedometer(speed) {
     const cx = 650, cy = 370, r = 35;
     ctx.save();
@@ -86,8 +179,7 @@ function initCarRaceGame() {
         x, y,
         vx: (Math.random() - 0.5) * 4,
         vy: (Math.random() - 0.5) * 4,
-        life: 1,
-        color
+        life: 1, color
       });
     }
   }
@@ -95,11 +187,8 @@ function initCarRaceGame() {
   function updateParticles() {
     particles = particles.filter(p => p.life > 0);
     for (let p of particles) {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life -= 0.04;
-      p.vx *= 0.95;
-      p.vy *= 0.95;
+      p.x += p.vx; p.y += p.vy;
+      p.life -= 0.04; p.vx *= 0.95; p.vy *= 0.95;
     }
   }
 
@@ -116,15 +205,10 @@ function initCarRaceGame() {
   // ── Car ───────────────────────────────────────
   class Car {
     constructor() {
-      this.x = 375;
-      this.y = 320;
-      this.angle = 0;
-      this.speed = 0;
-      this.lap = 1;
-      this.checkpoint = 0;
-      this.boosting = false;
-      this.boostCooldown = 0;
-      this.skidTimer = 0;
+      this.x = 375; this.y = 320;
+      this.angle = 0; this.speed = 0;
+      this.lap = 1; this.checkpoint = 0;
+      this.boosting = false; this.boostCooldown = 0;
     }
 
     update() {
@@ -162,8 +246,7 @@ function initCarRaceGame() {
           skidMarks.push({ x: this.x, y: this.y, life: 1 });
           if (skidMarks.length > 200) skidMarks.shift();
         }
-        this.x = newX;
-        this.y = newY;
+        this.x = newX; this.y = newY;
       } else {
         spawnParticles(this.x, this.y, colors.brickRed, 4);
         this.speed *= -0.3;
@@ -178,6 +261,7 @@ function initCarRaceGame() {
             gameState = 'finished';
             finalTime = currentTime;
             clearInterval(gameLoop);
+            onRaceFinished(finalTime);
           }
         }
         this.checkpoint = 0;
@@ -219,30 +303,23 @@ function initCarRaceGame() {
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.angle);
-
       ctx.fillStyle = colors.yellow;
       ctx.fillRect(-15, -8, 30, 16);
-
       ctx.fillStyle = colors.lightBlue;
       ctx.fillRect(-4, -6, 10, 12);
-
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fillRect(-3, -5, 8, 10);
-
       ctx.fillStyle = colors.darkGray;
       ctx.fillRect(-13, -10, 5, 3);
       ctx.fillRect(-13, 7, 5, 3);
       ctx.fillRect(8, -10, 5, 3);
       ctx.fillRect(8, 7, 5, 3);
-
       ctx.fillStyle = '#666';
       ctx.fillRect(-11, -9, 2, 1);
       ctx.fillRect(9, -9, 2, 1);
-
       ctx.fillStyle = '#fff';
       ctx.fillRect(13, -4, 3, 2);
       ctx.fillRect(13, 2, 3, 2);
-
       ctx.restore();
     }
   }
@@ -257,7 +334,6 @@ function initCarRaceGame() {
     draw() {
       ctx.fillStyle = colors.darkGray;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
       this.drawInfield();
 
       ctx.fillStyle = colors.lightGray;
@@ -320,7 +396,6 @@ function initCarRaceGame() {
     drawInfield() {
       ctx.fillStyle = '#1e2a1e';
       ctx.fillRect(105, 105, 490, 190);
-
       ctx.strokeStyle = 'rgba(255,255,255,0.04)';
       ctx.lineWidth = 1;
       for (let x = 110; x < 595; x += 30) {
@@ -384,6 +459,19 @@ function initCarRaceGame() {
   document.addEventListener('keydown', e => { keys[e.code] = true; e.preventDefault(); });
   document.addEventListener('keyup', e => { keys[e.code] = false; });
 
+  // ── Nach Rennende ──────────────────────────────
+  async function onRaceFinished(time) {
+    // Username holen (aus localStorage oder neu eingeben)
+    if (!username) {
+      username = await getUsername();
+    }
+    // Score speichern
+    await saveScore(username, Math.round(time * 1000) / 1000);
+    // Bestenliste neu laden
+    leaderboard = await loadLeaderboard();
+    showLeaderboard = true;
+  }
+
   // ── HUD ────────────────────────────────────────
   function drawHUD() {
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
@@ -415,27 +503,21 @@ function initCarRaceGame() {
     ctx.font = '9px "Press Start 2P"';
     ctx.fillText(`${gameStarted ? currentTime.toFixed(2) : '0.00'}s`, canvas.width - 10, 22);
 
-    // Speedometer
     drawSpeedometer(car.speed);
 
-    // Boost-Tank neben Tachometer
+    // NOS Tank
     const boostPct = 1 - Math.min(car.boostCooldown / 120, 1);
     const tankX = 610, tankY = 345, tankW = 12, tankH = 60;
-    // Hintergrund
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
     ctx.fillRect(tankX - 2, tankY - tankH - 2, tankW + 4, tankH + 4);
-    // Leerer Tank
     ctx.fillStyle = colors.lightGray;
     ctx.fillRect(tankX, tankY - tankH, tankW, tankH);
-    // Füllstand
     const fillH = tankH * boostPct;
     ctx.fillStyle = boostPct === 1 ? colors.yellow : boostPct > 0.3 ? '#ff9900' : colors.red;
     ctx.fillRect(tankX, tankY - fillH, tankW, fillH);
-    // Rahmen
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 1;
     ctx.strokeRect(tankX, tankY - tankH, tankW, tankH);
-    // Label
     ctx.font = '5px "Press Start 2P"';
     ctx.fillStyle = colors.white;
     ctx.textAlign = 'center';
@@ -459,11 +541,7 @@ function initCarRaceGame() {
     const iv = setInterval(() => {
       count--;
       countdown = count;
-      if (count <= 0) {
-        clearInterval(iv);
-        countdown = 0;
-        cb();
-      }
+      if (count <= 0) { clearInterval(iv); countdown = 0; cb(); }
     }, 800);
   }
 
@@ -478,6 +556,79 @@ function initCarRaceGame() {
       ctx.fillText(countdown, canvas.width / 2, canvas.height / 2 + 20);
       ctx.restore();
     }
+  }
+
+  // ── Leaderboard Overlay ────────────────────────
+  function drawLeaderboardOverlay() {
+    // Dunkles Panel
+    ctx.fillStyle = 'rgba(0,0,0,0.88)';
+    ctx.fillRect(120, 50, 460, 320);
+    ctx.strokeStyle = colors.yellow;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(120, 50, 460, 320);
+
+    // Titel
+    ctx.font = '10px "Press Start 2P"';
+    ctx.fillStyle = colors.yellow;
+    ctx.textAlign = 'center';
+    ctx.shadowColor = colors.yellow;
+    ctx.shadowBlur = 8;
+    ctx.fillText('WEEK TOP 10', canvas.width / 2, 80);
+    ctx.shadowBlur = 0;
+
+    // Wochenzeitraum
+    ctx.font = '6px "Press Start 2P"';
+    ctx.fillStyle = colors.lightBlue;
+    const now = new Date();
+    const dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+    ctx.fillText(`KW ${getWeekNumber(now)} · Mo–So MEZ`, canvas.width / 2, 96);
+
+    // Einträge
+    if (leaderboard.length === 0) {
+      ctx.font = '7px "Press Start 2P"';
+      ctx.fillStyle = colors.lightGray;
+      ctx.fillText('Noch keine Einträge', canvas.width / 2, 200);
+    } else {
+      leaderboard.forEach((entry, i) => {
+        const y = 122 + i * 24;
+        const isPlayer = entry.username === username;
+
+        // Highlight für Spieler
+        if (isPlayer) {
+          ctx.fillStyle = 'rgba(255,212,82,0.12)';
+          ctx.fillRect(130, y - 10, 440, 20);
+        }
+
+        // Rang
+        ctx.font = '7px "Press Start 2P"';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : colors.lightGray;
+        const medal = i === 0 ? '01' : i === 1 ? '02' : i === 2 ? '03' : `${String(i+1).padStart(2,'0')}`;
+        ctx.fillText(medal, 140, y + 4);
+
+        // Name
+        ctx.fillStyle = isPlayer ? colors.yellow : colors.white;
+        ctx.fillText(entry.username.substring(0, 12), 175, y + 4);
+
+        // Zeit
+        ctx.textAlign = 'right';
+        ctx.fillStyle = isPlayer ? colors.yellow : colors.lightBlue;
+        ctx.fillText(`${Number(entry.time_seconds).toFixed(2)}s`, 550, y + 4);
+      });
+    }
+
+    // Hinweis
+    ctx.font = '6px "Press Start 2P"';
+    ctx.fillStyle = colors.lightGray;
+    ctx.textAlign = 'center';
+    ctx.fillText('ENTER oder Button zum Neustart', canvas.width / 2, 358);
+  }
+
+  function getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
   }
 
   // ── Menu ───────────────────────────────────────
@@ -524,25 +675,38 @@ function initCarRaceGame() {
 
     ctx.font = '10px "Press Start 2P"';
     ctx.fillStyle = colors.white;
-    ctx.fillText('3 LAPS · BEAT YOUR TIME', canvas.width / 2, 230);
+    ctx.fillText('3 LAPS · BEAT YOUR TIME', canvas.width / 2, 218);
+
+    // Bestenliste Button im Menü
+    ctx.font = '7px "Press Start 2P"';
+    ctx.fillStyle = colors.lightGray;
+    ctx.fillText('[ L ] BESTENLISTE', canvas.width / 2, 244);
 
     ctx.fillStyle = 'rgba(255,212,82,0.08)';
-    ctx.fillRect(200, 255, 300, 90);
+    ctx.fillRect(200, 258, 300, 90);
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 1;
-    ctx.strokeRect(200, 255, 300, 90);
+    ctx.strokeRect(200, 258, 300, 90);
 
     ctx.font = '7px "Press Start 2P"';
     const controls = ['↑  ACCELERATE', '↓  BRAKE / REVERSE', '← →  STEER', 'SPACE  BOOST'];
     controls.forEach((c, i) => {
       ctx.fillStyle = i % 2 === 0 ? colors.white : colors.lightBlue;
-      ctx.fillText(c, canvas.width / 2, 272 + i * 16);
+      ctx.fillText(c, canvas.width / 2, 275 + i * 16);
     });
 
     ctx.save();
-    ctx.translate(350, 360);
+    ctx.translate(350, 370);
     drawMiniCar();
     ctx.restore();
+
+    // Username anzeigen falls gesetzt
+    if (username) {
+      ctx.font = '6px "Press Start 2P"';
+      ctx.fillStyle = colors.lightGray;
+      ctx.textAlign = 'right';
+      ctx.fillText(`FAHRER: ${username}`, canvas.width - 10, canvas.height - 10);
+    }
   }
 
   function drawMiniCar() {
@@ -564,39 +728,34 @@ function initCarRaceGame() {
     ctx.fillStyle = 'rgba(0,0,0,0.78)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.font = '10px "Press Start 2P"';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = colors.yellow;
-    ctx.shadowColor = colors.yellow;
-    ctx.shadowBlur = 10;
-    const trophy = [" _____", "(     )", " )   (", "(_____)", "  | |  ", " _|_|_ "];
-    trophy.forEach((l, i) => ctx.fillText(l, canvas.width / 2, 120 + i * 15));
-    ctx.shadowBlur = 0;
-
-    ctx.font = '22px "Press Start 2P"';
-    ctx.fillStyle = colors.yellow;
-    ctx.fillText('RACE OVER!', canvas.width / 2, 240);
-
-    ctx.font = '13px "Press Start 2P"';
-    ctx.fillStyle = colors.white;
-    ctx.fillText(`TIME: ${finalTime.toFixed(2)}s`, canvas.width / 2, 275);
-
-    ctx.font = '8px "Press Start 2P"';
-    ctx.fillStyle = colors.lightBlue;
-    let rating = finalTime < 30 ? 'LEGENDARY!' : finalTime < 50 ? 'GREAT DRIVE!' : 'KEEP RACING!';
-    ctx.fillText(rating, canvas.width / 2, 305);
-
-    ctx.textAlign = 'left';
-    ctx.shadowBlur = 0;
+    if (showLeaderboard) {
+      drawLeaderboardOverlay();
+    } else {
+      // Warte-Animation während Score gespeichert wird
+      ctx.font = '10px "Press Start 2P"';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = colors.yellow;
+      ctx.fillText('RACE OVER!', canvas.width / 2, 200);
+      ctx.font = '7px "Press Start 2P"';
+      ctx.fillStyle = colors.lightGray;
+      ctx.fillText(`TIME: ${finalTime.toFixed(2)}s`, canvas.width / 2, 230);
+      ctx.fillText('Speichere Ergebnis...', canvas.width / 2, 260);
+    }
 
     startButton.style.display = 'flex';
     startButton.textContent = 'PLAY AGAIN';
   }
 
   // ── Game loop ──────────────────────────────────
-  function startGame() {
+  async function startGame() {
+    // Username beim ersten Start abfragen
+    if (!username) {
+      username = await getUsername();
+    }
+
     gameState = 'countdown';
     gameStarted = false;
+    showLeaderboard = false;
     startButton.style.display = 'none';
     skidMarks = [];
     particles = [];
@@ -609,9 +768,7 @@ function initCarRaceGame() {
     if (gameLoop) clearInterval(gameLoop);
     gameLoop = setInterval(update, 1000 / 60);
 
-    startCountdown(() => {
-      gameState = 'playing';
-    });
+    startCountdown(() => { gameState = 'playing'; });
   }
 
   function update() {
@@ -634,24 +791,35 @@ function initCarRaceGame() {
       drawParticles();
       if (car) car.draw();
       drawHUD();
-
       if (gameState === 'countdown') drawCountdown();
       if (gameState === 'finished') drawFinished();
     }
   }
 
+  // L-Taste öffnet Bestenliste im Menü
+  document.addEventListener('keydown', async e => {
+    if (e.key === 'l' || e.key === 'L') {
+      if (gameState === 'menu') {
+        leaderboard = await loadLeaderboard();
+        showLeaderboard = true;
+        gameState = 'finished';
+        draw();
+      }
+    }
+    if (e.key === 'Enter' && gameState === 'finished') {
+      startGame();
+    }
+  });
+
   startButton.onclick = startGame;
   positionButton(startButton);
-  // Warte bis Google Font geladen ist
+
   document.fonts.ready.then(() => {
     draw();
     setInterval(() => { if (gameState === 'menu') draw(); }, 50);
   });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM fully loaded and parsed');
+document.addEventListener('DOMContentLoaded', function () {
   initCarRaceGame();
 });
-
-console.log('Script loaded');
