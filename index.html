@@ -96,6 +96,80 @@
       box-shadow: 2px 2px 0 #b8951a;
     }
 
+    #leaderboardButton {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 10px;
+      width: 200px;
+      height: 48px;
+      background: transparent;
+      color: #FFD452;
+      border: 2px solid #FFD452;
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      box-shadow: 4px 4px 0 #b8951a;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    #leaderboardButton:hover {
+      transform: translateX(-50%) translateY(-2px);
+      box-shadow: 4px 6px 0 #b8951a;
+      background: rgba(255, 212, 82, 0.1);
+    }
+
+    #buttonRow {
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      right: 0;
+      display: none;
+      justify-content: center;
+      gap: 12px;
+      z-index: 20;
+    }
+
+    #buttonRow button {
+      height: 48px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-weight: bold;
+      border: none;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    #buttonRow button:hover {
+      transform: translateY(-2px);
+    }
+
+    #btnRestart {
+      width: 160px;
+      background: #FFD452;
+      color: #2F343E;
+      font-size: 10px;
+      box-shadow: 4px 4px 0 #b8951a;
+    }
+
+    #btnLeaderboard {
+      width: 160px;
+      background: transparent;
+      color: #FFD452;
+      border: 2px solid #FFD452 !important;
+      font-size: 8px;
+      box-shadow: 4px 4px 0 #474B57;
+    }
+
+    #btnLeaderboard:hover {
+      background: rgba(255,212,82,0.1);
+    }
+
     #keyHint {
       margin-top: 12px;
       color: #474B57;
@@ -111,9 +185,13 @@
 <div id="gameWrapper">
   <canvas id="gameCanvas" width="700" height="420"></canvas>
   <button id="startButton">START GAME</button>
+  <div id="buttonRow">
+    <button id="btnRestart">PLAY AGAIN</button>
+    <button id="btnLeaderboard">BESTENLISTE</button>
+  </div>
 </div>
 <div id="keyHint">↑↓ SPEED  ←→ STEER  SPACE BOOST</div>
 
-<script src="car_race_game.js"></script>
+<script src="car_race_game.js" defer></script>
 </body>
 </html>
