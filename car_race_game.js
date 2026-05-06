@@ -186,67 +186,11 @@ function initCarRaceGame() {
 
   // ── Leaderboard Seite ─────────────────────────
   function showLeaderboardPage() {
-    const w = window.open('', '_blank');
-    const kw = getWeekNumber(new Date());
-    const rows = leaderboard.length === 0
-      ? `<tr><td colspan="3" style="text-align:center;color:#474B57;padding:32px;">
-           Noch keine Einträge diese Woche
-         </td></tr>`
-      : leaderboard.map((e, i) => {
-          const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
-          const hl = e.username === username ? 'background:rgba(255,212,82,0.12);' : '';
-          return `<tr style="${hl}">
-            <td style="color:${i<3?'#FFD452':'#474B57'};padding:12px 16px;">${medal}</td>
-            <td style="color:${e.username===username?'#FFD452':'#fff'};padding:12px 16px;">
-              ${e.username}
-            </td>
-            <td style="color:#BAC5E5;padding:12px 16px;text-align:right;">
-              ${Number(e.time_seconds).toFixed(2)}s
-            </td>
-          </tr>`;
-        }).join('');
-
-    w.document.write(`<!DOCTYPE html>
-<html lang="de"><head>
-  <meta charset="UTF-8">
-  <title>CarOnSale Race – Top 10 KW${kw}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{background:#1a1d24;color:#fff;font-family:'Press Start 2P',monospace;
-         display:flex;flex-direction:column;align-items:center;
-         justify-content:center;min-height:100vh;padding:40px 20px;}
-    .card{background:#2F343E;border:2px solid #FFD452;
-          box-shadow:0 0 30px rgba(255,212,82,0.3);
-          padding:40px;max-width:560px;width:100%;}
-    h1{color:#FFD452;font-size:14px;text-align:center;margin-bottom:8px;
-       text-shadow:0 0 12px rgba(255,212,82,0.6);}
-    .sub{color:#474B57;font-size:7px;text-align:center;margin-bottom:32px;}
-    table{width:100%;border-collapse:collapse;font-size:9px;}
-    thead tr{border-bottom:1px solid #FFD452;}
-    thead th{color:#FFD452;padding:8px 16px;text-align:left;font-size:7px;}
-    thead th:last-child{text-align:right;}
-    tbody tr{border-bottom:1px solid rgba(255,255,255,0.05);}
-    tbody tr:hover{background:rgba(255,255,255,0.04);}
-    .hint{margin-top:28px;color:#474B57;font-size:6px;text-align:center;line-height:2.2;}
-    .back{display:block;margin-top:20px;text-align:center;color:#474B57;
-          font-size:7px;cursor:pointer;text-decoration:none;}
-    .back:hover{color:#FFD452;}
-  </style>
-</head><body>
-  <div class="card">
-    <h1>WEEK TOP 10</h1>
-    <p class="sub">KW ${kw} · Montag 00:00 – Sonntag 23:59 MEZ</p>
-    <table>
-      <thead><tr><th>RANG</th><th>FAHRER</th><th>ZEIT</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <p class="hint">Bestenliste wird jeden Montag um 00:00 MEZ zurückgesetzt</p>
-    <a class="back" onclick="window.close()">← zurück zum Spiel</a>
-  </div>
-</body></html>`);
-    w.document.close();
-  }
+  // Bestenliste ist bereits im Canvas sichtbar – Button macht nichts extra nötig
+  // Stattdessen: falls noch nicht sichtbar, einblenden
+  showLeaderboard = true;
+  draw();
+}
 
   // ── Speedometer ───────────────────────────────
   function drawSpeedometer(speed) {
@@ -466,22 +410,24 @@ function initCarRaceGame() {
   });
 
   // ── Nach Rennende ─────────────────────────────
-  async function onRaceFinished(time) {
-  // Buttons sofort zeigen, nicht warten
+ async function onRaceFinished(time) {
   startButton.style.display = 'none';
   buttonRow.style.display = 'flex';
 
   if (!username) username = await getUsername();
 
+  // Sofort optimistisch einfügen und anzeigen
+  const myEntry = { username: username, time_seconds: Math.round(time * 1000) / 1000 };
+  leaderboard = [myEntry]; // Placeholder damit sofort was zu sehen ist
+  showLeaderboard = true;
+
+  // Im Hintergrund speichern und echte Liste laden
   try {
-    await saveScore(username, Math.round(time * 1000) / 1000);
+    await saveScore(username, myEntry.time_seconds);
     leaderboard = await loadLeaderboard();
   } catch(e) {
     console.error('Score speichern fehlgeschlagen', e);
-    leaderboard = [];
   }
-
-  showLeaderboard = true;
 }
 
   // ── HUD ───────────────────────────────────────
@@ -690,8 +636,11 @@ function initCarRaceGame() {
   // Button Events
   startButton.onclick = startGame;
   btnRestart.onclick = startGame;
-  btnLeaderboard.onclick = showLeaderboardPage;
-
+btnLeaderboard.onclick = () => {
+  localStorage.removeItem('cos_username');
+  username = null;
+  getUsername().then(name => { username = name; });
+};
   // Font-Check Loop: zeichnet erst wenn Pixel-Font bereit ist
   waitForFont(() => {
     draw();
