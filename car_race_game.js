@@ -410,24 +410,24 @@ function initCarRaceGame() {
   });
 
   // ── Nach Rennende ─────────────────────────────
- async function onRaceFinished(time) {
+  async function onRaceFinished(time) {
   startButton.style.display = 'none';
   buttonRow.style.display = 'flex';
 
   if (!username) username = await getUsername();
 
-  // Sofort optimistisch einfügen und anzeigen
-  const myEntry = { username: username, time_seconds: Math.round(time * 1000) / 1000 };
-  leaderboard = [myEntry]; // Placeholder damit sofort was zu sehen ist
-  showLeaderboard = true;
+  const myTime = Math.round(time * 1000) / 1000;
 
-  // Im Hintergrund speichern und echte Liste laden
+  // Erst speichern, dann laden – aber parallel damit es schnell geht
   try {
-    await saveScore(username, myEntry.time_seconds);
+    await saveScore(username, myTime);
     leaderboard = await loadLeaderboard();
   } catch(e) {
-    console.error('Score speichern fehlgeschlagen', e);
+    // Fallback: eigenen Eintrag zeigen
+    leaderboard = [{ username: username, time_seconds: myTime }];
   }
+
+  showLeaderboard = true;
 }
 
   // ── HUD ───────────────────────────────────────
@@ -636,11 +636,7 @@ function initCarRaceGame() {
   // Button Events
   startButton.onclick = startGame;
   btnRestart.onclick = startGame;
-btnLeaderboard.onclick = () => {
-  localStorage.removeItem('cos_username');
-  username = null;
-  getUsername().then(name => { username = name; });
-};
+btnLeaderboard.onclick = showLeaderboardPage;
   // Font-Check Loop: zeichnet erst wenn Pixel-Font bereit ist
   waitForFont(() => {
     draw();
