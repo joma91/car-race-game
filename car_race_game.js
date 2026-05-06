@@ -54,6 +54,9 @@ function initCarRaceGame() {
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
   const startButton = document.getElementById('startButton');
+  const buttonRow = document.getElementById('buttonRow');
+  const btnRestart = document.getElementById('btnRestart');
+  const btnLeaderboard = document.getElementById('btnLeaderboard');
 
   const colors = {
     yellow: '#FFD452',
@@ -82,7 +85,126 @@ function initCarRaceGame() {
   let leaderboard = [];
   let showLeaderboard = false;
   let username = localStorage.getItem('cos_username') || null;
-  let inputActive = false; // Flag: ist Username-Input offen?
+  let inputActive = false;
+
+  // ── Leaderboard Seite ─────────────────────────
+  function showLeaderboardPage() {
+    // Öffnet eine neue Seite mit der Bestenliste
+    const w = window.open('', '_blank');
+    const kw = getWeekNumber(new Date());
+
+    const rows = leaderboard.length === 0
+      ? `<tr><td colspan="3" style="text-align:center;color:#474B57;padding:24px;">Noch keine Einträge diese Woche</td></tr>`
+      : leaderboard.map((e, i) => {
+          const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+          const highlight = e.username === username ? 'background:rgba(255,212,82,0.12);' : '';
+          return `<tr style="${highlight}">
+            <td style="color:${i < 3 ? '#FFD452' : '#474B57'};padding:10px 16px;">${medal}</td>
+            <td style="color:${e.username === username ? '#FFD452' : '#fff'};padding:10px 16px;">${e.username}</td>
+            <td style="color:#BAC5E5;padding:10px 16px;text-align:right;">${Number(e.time_seconds).toFixed(2)}s</td>
+          </tr>`;
+        }).join('');
+
+    w.document.write(`<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>CarOnSale Race – Bestenliste KW${kw}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background:#1a1d24;
+      color:#fff;
+      font-family:'Press Start 2P',monospace;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      min-height:100vh;
+      padding:40px 20px;
+    }
+    .card {
+      background:#2F343E;
+      border:2px solid #FFD452;
+      box-shadow:0 0 30px rgba(255,212,82,0.3);
+      padding:40px;
+      max-width:560px;
+      width:100%;
+    }
+    h1 {
+      color:#FFD452;
+      font-size:14px;
+      text-align:center;
+      margin-bottom:8px;
+      text-shadow:0 0 12px rgba(255,212,82,0.6);
+    }
+    .subtitle {
+      color:#474B57;
+      font-size:7px;
+      text-align:center;
+      margin-bottom:32px;
+    }
+    table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:9px;
+    }
+    thead tr {
+      border-bottom:1px solid #FFD452;
+    }
+    thead th {
+      color:#FFD452;
+      padding:8px 16px;
+      text-align:left;
+      font-size:7px;
+    }
+    thead th:last-child { text-align:right; }
+    tbody tr {
+      border-bottom:1px solid rgba(255,255,255,0.05);
+      transition:background 0.2s;
+    }
+    tbody tr:hover { background:rgba(255,255,255,0.04); }
+    .back {
+      margin-top:24px;
+      display:block;
+      text-align:center;
+      color:#474B57;
+      font-size:7px;
+      cursor:pointer;
+      text-decoration:none;
+    }
+    .back:hover { color:#FFD452; }
+    .reset-hint {
+      margin-top:32px;
+      color:#474B57;
+      font-size:6px;
+      text-align:center;
+      line-height:2;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>WEEK TOP 10</h1>
+    <p class="subtitle">KW ${kw} · Montag 00:00 – Sonntag 23:59 MEZ</p>
+    <table>
+      <thead>
+        <tr>
+          <th>RANG</th>
+          <th>FAHRER</th>
+          <th>ZEIT</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <a class="back" onclick="window.close()">← zurück zum Spiel</a>
+    <p class="reset-hint">Bestenliste wird jeden Montag um 00:00 MEZ zurückgesetzt</p>
+  </div>
+</body>
+</html>`);
+    w.document.close();
+  }
 
   // ── Username Prompt ────────────────────────────
   function getUsername() {
@@ -118,12 +240,10 @@ function initCarRaceGame() {
       const btn = overlay.querySelector('#usernameConfirm');
       const err = overlay.querySelector('#usernameError');
 
-      // Fokus nach kurzem Delay (Browser braucht das)
       setTimeout(() => input.focus(), 50);
 
-      // Verhindere dass Spieltasten den Input stören
       input.addEventListener('keydown', e => {
-        e.stopPropagation(); // Nicht an den Spiel-Listener weitergeben
+        e.stopPropagation();
         if (e.key === 'Enter') confirm();
       });
 
@@ -324,16 +444,12 @@ function initCarRaceGame() {
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fillRect(-3, -5, 8, 10);
       ctx.fillStyle = colors.darkGray;
-      ctx.fillRect(-13, -10, 5, 3);
-      ctx.fillRect(-13, 7, 5, 3);
-      ctx.fillRect(8, -10, 5, 3);
-      ctx.fillRect(8, 7, 5, 3);
+      ctx.fillRect(-13, -10, 5, 3); ctx.fillRect(-13, 7, 5, 3);
+      ctx.fillRect(8, -10, 5, 3);  ctx.fillRect(8, 7, 5, 3);
       ctx.fillStyle = '#666';
-      ctx.fillRect(-11, -9, 2, 1);
-      ctx.fillRect(9, -9, 2, 1);
+      ctx.fillRect(-11, -9, 2, 1); ctx.fillRect(9, -9, 2, 1);
       ctx.fillStyle = '#fff';
-      ctx.fillRect(13, -4, 3, 2);
-      ctx.fillRect(13, 2, 3, 2);
+      ctx.fillRect(13, -4, 3, 2);  ctx.fillRect(13, 2, 3, 2);
       ctx.restore();
     }
   }
@@ -469,7 +585,7 @@ function initCarRaceGame() {
   // ── Input ─────────────────────────────────────
   const keys = {};
   document.addEventListener('keydown', e => {
-    if (inputActive) return; // Eingabe sperren wenn Username-Box offen
+    if (inputActive) return;
     keys[e.code] = true;
     e.preventDefault();
   });
@@ -484,6 +600,17 @@ function initCarRaceGame() {
     await saveScore(username, Math.round(time * 1000) / 1000);
     leaderboard = await loadLeaderboard();
     showLeaderboard = true;
+  }
+
+  // ── Button Helpers ────────────────────────────
+  function showFinishButtons() {
+    startButton.style.display = 'none';
+    buttonRow.style.display = 'flex';
+  }
+
+  function hideFinishButtons() {
+    buttonRow.style.display = 'none';
+    startButton.style.display = 'none';
   }
 
   // ── HUD ───────────────────────────────────────
@@ -572,7 +699,7 @@ function initCarRaceGame() {
     }
   }
 
-  // ── Leaderboard Overlay ────────────────────────
+  // ── Leaderboard Overlay (Canvas) ───────────────
   function drawLeaderboardOverlay() {
     ctx.fillStyle = 'rgba(0,0,0,0.88)';
     ctx.fillRect(120, 50, 460, 320);
@@ -619,16 +746,14 @@ function initCarRaceGame() {
     ctx.font = '6px "Press Start 2P"';
     ctx.fillStyle = colors.lightGray;
     ctx.textAlign = 'center';
-    ctx.fillText('ENTER oder Button zum Neustart', canvas.width / 2, 358);
+    ctx.fillText('↓ Buttons zum Neustart oder vollständigen Ranking', canvas.width / 2, 355);
   }
 
   // ── Menu ──────────────────────────────────────
   function drawMenu() {
-    // Hintergrund
     ctx.fillStyle = colors.darkGray;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Grid
     ctx.strokeStyle = 'rgba(255,255,255,0.04)';
     ctx.lineWidth = 1;
     for (let x = 0; x < canvas.width; x += 30) {
@@ -638,7 +763,6 @@ function initCarRaceGame() {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
     }
 
-    // Top bar
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
     ctx.fillRect(0, 0, canvas.width, 42);
     ctx.strokeStyle = colors.yellow;
@@ -647,7 +771,7 @@ function initCarRaceGame() {
     ctx.moveTo(0, 42); ctx.lineTo(canvas.width, 42); ctx.stroke();
     drawHeaderLogo(canvas.width / 2, 26);
 
-    // ASCII Logo groß
+    // ASCII Logo
     ctx.save();
     ctx.shadowColor = colors.yellow;
     ctx.shadowBlur = 14;
@@ -663,7 +787,7 @@ function initCarRaceGame() {
     bigLogo.forEach((line, i) => ctx.fillText(line, canvas.width / 2, 78 + i * 17));
     ctx.restore();
 
-    // Subtitle "Race Game"
+    // Race Game Schriftzug
     ctx.save();
     ctx.shadowColor = colors.lightBlue;
     ctx.shadowBlur = 6;
@@ -682,17 +806,14 @@ function initCarRaceGame() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Info-Zeile
     ctx.font = '7px "Press Start 2P"';
     ctx.fillStyle = colors.lightBlue;
     ctx.textAlign = 'center';
     ctx.fillText('3 RUNDEN · BESTZEIT SCHLAGEN', canvas.width / 2, 195);
 
-    // Bestenliste Hint
     ctx.fillStyle = colors.lightGray;
     ctx.fillText('[ L ]  BESTENLISTE DER WOCHE', canvas.width / 2, 215);
 
-    // Controls Box
     ctx.fillStyle = 'rgba(255,212,82,0.07)';
     ctx.fillRect(210, 230, 280, 86);
     ctx.strokeStyle = colors.yellow;
@@ -706,13 +827,11 @@ function initCarRaceGame() {
       ctx.fillText(c, canvas.width / 2, 248 + i * 17);
     });
 
-    // Mini-Auto Animation
     ctx.save();
     ctx.translate(350, 340);
     drawMiniCar();
     ctx.restore();
 
-    // Username unten rechts
     if (username) {
       ctx.font = '6px "Press Start 2P"';
       ctx.fillStyle = colors.lightGray;
@@ -740,6 +859,7 @@ function initCarRaceGame() {
 
     if (showLeaderboard) {
       drawLeaderboardOverlay();
+      showFinishButtons();
     } else {
       ctx.font = '10px "Press Start 2P"';
       ctx.textAlign = 'center';
@@ -750,9 +870,6 @@ function initCarRaceGame() {
       ctx.fillText(`TIME: ${finalTime ? finalTime.toFixed(2) : '0.00'}s`, canvas.width / 2, 228);
       ctx.fillText('Speichere Ergebnis...', canvas.width / 2, 256);
     }
-
-    startButton.style.display = 'flex';
-    startButton.textContent = 'PLAY AGAIN';
   }
 
   // ── Game loop ─────────────────────────────────
@@ -762,7 +879,7 @@ function initCarRaceGame() {
     gameState = 'countdown';
     gameStarted = false;
     showLeaderboard = false;
-    startButton.style.display = 'none';
+    hideFinishButtons();
     skidMarks = []; particles = [];
     car = new Car();
     track = new Track();
@@ -798,7 +915,7 @@ function initCarRaceGame() {
     }
   }
 
-  // Tastatur-Shortcuts außerhalb des Inputs
+  // Tastatur-Shortcuts
   document.addEventListener('keydown', e => {
     if (inputActive) return;
     if ((e.key === 'l' || e.key === 'L') && gameState === 'menu') {
@@ -814,12 +931,24 @@ function initCarRaceGame() {
     }
   });
 
+  // Button Events
   startButton.onclick = startGame;
+  btnRestart.onclick = startGame;
+  btnLeaderboard.onclick = showLeaderboardPage;
+
   positionButton(startButton);
 
-  document.fonts.ready.then(() => {
+  // Font explizit laden
+  const font = new FontFace('Press Start 2P', 'url(https://fonts.gstatic.com/s/pressstart2p/v15/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2)');
+  font.load().then(loadedFont => {
+    document.fonts.add(loadedFont);
     draw();
     setInterval(() => { if (gameState === 'menu') draw(); }, 50);
+  }).catch(() => {
+    setTimeout(() => {
+      draw();
+      setInterval(() => { if (gameState === 'menu') draw(); }, 50);
+    }, 500);
   });
 }
 
