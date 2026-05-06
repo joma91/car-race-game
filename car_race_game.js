@@ -467,14 +467,22 @@ function initCarRaceGame() {
 
   // ── Nach Rennende ─────────────────────────────
   async function onRaceFinished(time) {
-    if (!username) username = await getUsername();
-    await saveScore(username, Math.round(time*1000)/1000);
+  // Buttons sofort zeigen, nicht warten
+  startButton.style.display = 'none';
+  buttonRow.style.display = 'flex';
+
+  if (!username) username = await getUsername();
+
+  try {
+    await saveScore(username, Math.round(time * 1000) / 1000);
     leaderboard = await loadLeaderboard();
-    showLeaderboard = true;
-    // Buttons einblenden
-    startButton.style.display = 'none';
-    buttonRow.style.display = 'flex';
+  } catch(e) {
+    console.error('Score speichern fehlgeschlagen', e);
+    leaderboard = [];
   }
+
+  showLeaderboard = true;
+}
 
   // ── HUD ───────────────────────────────────────
   function drawHUD() {
