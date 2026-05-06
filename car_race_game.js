@@ -15,16 +15,22 @@ async function supabaseFetch(path, options = {}) {
   return res.json();
 }
 
-// Wochenanfang (Montag 00:00 MEZ) als ISO-String
 function getWeekStart() {
   const now = new Date();
   const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const mez = new Date(utc + 3600000); // MEZ = UTC+1 (vereinfacht)
-  const day = mez.getDay(); // 0=So, 1=Mo...
+  const mez = new Date(utc + 3600000);
+  const day = mez.getDay();
   const diff = (day === 0 ? -6 : 1 - day);
   mez.setDate(mez.getDate() + diff);
   mez.setHours(0, 0, 0, 0);
-  return new Date(mez.getTime() - 3600000).toISOString(); // zurück zu UTC
+  return new Date(mez.getTime() - 3600000).toISOString();
+}
+
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
 async function saveScore(username, timeSeconds) {
@@ -75,14 +81,13 @@ function initCarRaceGame() {
   let particles = [];
   let leaderboard = [];
   let showLeaderboard = false;
-
-  // Username aus localStorage oder null
   let username = localStorage.getItem('cos_username') || null;
+  let inputActive = false; // Flag: ist Username-Input offen?
 
   // ── Username Prompt ────────────────────────────
   function getUsername() {
     return new Promise(resolve => {
-      // Overlay
+      inputActive = true;
       const overlay = document.createElement('div');
       overlay.style.cssText = `
         position:fixed;inset:0;background:rgba(0,0,0,0.85);
@@ -91,20 +96,20 @@ function initCarRaceGame() {
       `;
       overlay.innerHTML = `
         <div style="background:#2F343E;border:2px solid #FFD452;padding:32px;text-align:center;max-width:360px;width:90%;">
-          <div style="color:#FFD452;font-size:11px;margin-bottom:8px;">CarOnSale Race</div>
+          <div style="color:#FFD452;font-size:13px;margin-bottom:10px;">CarOnSale Race</div>
           <div style="color:#fff;font-size:9px;margin-bottom:24px;line-height:1.8;">Wähle deinen Fahrernamen</div>
-          <input id="usernameInput" maxlength="16" placeholder="NAME..." style="
+          <input id="usernameInput" maxlength="16" placeholder="NAME..." autocomplete="off" style="
             width:100%;background:#1a1d24;border:2px solid #FFD452;color:#FFD452;
             font-family:'Press Start 2P',monospace;font-size:12px;padding:10px;
-            text-align:center;outline:none;margin-bottom:16px;box-sizing:border-box;
+            text-align:center;outline:none;margin-bottom:8px;box-sizing:border-box;
           "/>
-          <div id="usernameError" style="color:#e74c3c;font-size:7px;margin-bottom:12px;min-height:12px;"></div>
+          <div id="usernameError" style="color:#e74c3c;font-size:7px;margin-bottom:14px;min-height:14px;line-height:1.6;"></div>
           <button id="usernameConfirm" style="
             background:#FFD452;color:#2F343E;border:none;
             font-family:'Press Start 2P',monospace;font-size:10px;
             padding:12px 24px;cursor:pointer;width:100%;
             box-shadow:4px 4px 0 #b8951a;
-          ">START</button>
+          ">LOS GEHT'S</button>
         </div>
       `;
       document.body.appendChild(overlay);
@@ -112,21 +117,30 @@ function initCarRaceGame() {
       const input = overlay.querySelector('#usernameInput');
       const btn = overlay.querySelector('#usernameConfirm');
       const err = overlay.querySelector('#usernameError');
-      input.focus();
+
+      // Fokus nach kurzem Delay (Browser braucht das)
+      setTimeout(() => input.focus(), 50);
+
+      // Verhindere dass Spieltasten den Input stören
+      input.addEventListener('keydown', e => {
+        e.stopPropagation(); // Nicht an den Spiel-Listener weitergeben
+        if (e.key === 'Enter') confirm();
+      });
 
       const confirm = () => {
         const val = input.value.trim().toUpperCase();
         if (!val || val.length < 2) {
-          err.textContent = 'Mind. 2 Zeichen!';
+          err.textContent = 'Mind. 2 Zeichen eingeben!';
+          input.focus();
           return;
         }
         localStorage.setItem('cos_username', val);
         document.body.removeChild(overlay);
+        inputActive = false;
         resolve(val);
       };
 
       btn.onclick = confirm;
-      input.addEventListener('keydown', e => { if (e.key === 'Enter') confirm(); });
     });
   }
 
@@ -367,10 +381,8 @@ function initCarRaceGame() {
       ctx.setLineDash([15, 15]);
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(80, 80);
-      ctx.lineTo(620, 80);
-      ctx.lineTo(620, 320);
-      ctx.lineTo(80, 320);
+      ctx.moveTo(80, 80); ctx.lineTo(620, 80);
+      ctx.lineTo(620, 320); ctx.lineTo(80, 320);
       ctx.closePath();
       ctx.stroke();
       ctx.setLineDash([]);
@@ -454,25 +466,27 @@ function initCarRaceGame() {
     }
   }
 
-  // ── Input ──────────────────────────────────────
+  // ── Input ─────────────────────────────────────
   const keys = {};
-  document.addEventListener('keydown', e => { keys[e.code] = true; e.preventDefault(); });
-  document.addEventListener('keyup', e => { keys[e.code] = false; });
+  document.addEventListener('keydown', e => {
+    if (inputActive) return; // Eingabe sperren wenn Username-Box offen
+    keys[e.code] = true;
+    e.preventDefault();
+  });
+  document.addEventListener('keyup', e => {
+    if (inputActive) return;
+    keys[e.code] = false;
+  });
 
-  // ── Nach Rennende ──────────────────────────────
+  // ── Nach Rennende ─────────────────────────────
   async function onRaceFinished(time) {
-    // Username holen (aus localStorage oder neu eingeben)
-    if (!username) {
-      username = await getUsername();
-    }
-    // Score speichern
+    if (!username) username = await getUsername();
     await saveScore(username, Math.round(time * 1000) / 1000);
-    // Bestenliste neu laden
     leaderboard = await loadLeaderboard();
     showLeaderboard = true;
   }
 
-  // ── HUD ────────────────────────────────────────
+  // ── HUD ───────────────────────────────────────
   function drawHUD() {
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
     ctx.fillRect(0, 0, canvas.width, 42);
@@ -534,7 +548,7 @@ function initCarRaceGame() {
     ctx.shadowBlur = 0;
   }
 
-  // ── Countdown ──────────────────────────────────
+  // ── Countdown ─────────────────────────────────
   function startCountdown(cb) {
     let count = 3;
     countdown = count;
@@ -560,14 +574,12 @@ function initCarRaceGame() {
 
   // ── Leaderboard Overlay ────────────────────────
   function drawLeaderboardOverlay() {
-    // Dunkles Panel
     ctx.fillStyle = 'rgba(0,0,0,0.88)';
     ctx.fillRect(120, 50, 460, 320);
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 2;
     ctx.strokeRect(120, 50, 460, 320);
 
-    // Titel
     ctx.font = '10px "Press Start 2P"';
     ctx.fillStyle = colors.yellow;
     ctx.textAlign = 'center';
@@ -576,14 +588,10 @@ function initCarRaceGame() {
     ctx.fillText('WEEK TOP 10', canvas.width / 2, 80);
     ctx.shadowBlur = 0;
 
-    // Wochenzeitraum
     ctx.font = '6px "Press Start 2P"';
     ctx.fillStyle = colors.lightBlue;
-    const now = new Date();
-    const dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
-    ctx.fillText(`KW ${getWeekNumber(now)} · Mo–So MEZ`, canvas.width / 2, 96);
+    ctx.fillText(`KW ${getWeekNumber(new Date())} · Mo–So MEZ`, canvas.width / 2, 96);
 
-    // Einträge
     if (leaderboard.length === 0) {
       ctx.font = '7px "Press Start 2P"';
       ctx.fillStyle = colors.lightGray;
@@ -592,50 +600,45 @@ function initCarRaceGame() {
       leaderboard.forEach((entry, i) => {
         const y = 122 + i * 24;
         const isPlayer = entry.username === username;
-
-        // Highlight für Spieler
         if (isPlayer) {
           ctx.fillStyle = 'rgba(255,212,82,0.12)';
           ctx.fillRect(130, y - 10, 440, 20);
         }
-
-        // Rang
         ctx.font = '7px "Press Start 2P"';
         ctx.textAlign = 'left';
         ctx.fillStyle = i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : colors.lightGray;
-        const medal = i === 0 ? '01' : i === 1 ? '02' : i === 2 ? '03' : `${String(i+1).padStart(2,'0')}`;
-        ctx.fillText(medal, 140, y + 4);
-
-        // Name
+        ctx.fillText(String(i + 1).padStart(2, '0'), 140, y + 4);
         ctx.fillStyle = isPlayer ? colors.yellow : colors.white;
         ctx.fillText(entry.username.substring(0, 12), 175, y + 4);
-
-        // Zeit
         ctx.textAlign = 'right';
         ctx.fillStyle = isPlayer ? colors.yellow : colors.lightBlue;
         ctx.fillText(`${Number(entry.time_seconds).toFixed(2)}s`, 550, y + 4);
       });
     }
 
-    // Hinweis
     ctx.font = '6px "Press Start 2P"';
     ctx.fillStyle = colors.lightGray;
     ctx.textAlign = 'center';
     ctx.fillText('ENTER oder Button zum Neustart', canvas.width / 2, 358);
   }
 
-  function getWeekNumber(date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-  }
-
-  // ── Menu ───────────────────────────────────────
+  // ── Menu ──────────────────────────────────────
   function drawMenu() {
+    // Hintergrund
     ctx.fillStyle = colors.darkGray;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += 30) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 30) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+
+    // Top bar
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
     ctx.fillRect(0, 0, canvas.width, 42);
     ctx.strokeStyle = colors.yellow;
@@ -644,14 +647,11 @@ function initCarRaceGame() {
     ctx.moveTo(0, 42); ctx.lineTo(canvas.width, 42); ctx.stroke();
     drawHeaderLogo(canvas.width / 2, 26);
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-    for (let x = 0; x < canvas.width; x += 30) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-    }
-    for (let y = 0; y < canvas.height; y += 30) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-    }
-
+    // ASCII Logo groß
+    ctx.save();
+    ctx.shadowColor = colors.yellow;
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = colors.yellow;
     ctx.font = '8px "Press Start 2P"';
     ctx.textAlign = 'center';
     const bigLogo = [
@@ -660,47 +660,59 @@ function initCarRaceGame() {
       "| (__/ _` | | (_) | ' \\ \\__ \\/ _` | / -_)",
       " \\___\\__,_|  \\___/|_||_|___/\\__,_|_\\___|"
     ];
-    ctx.save();
-    ctx.shadowColor = colors.yellow;
-    ctx.shadowBlur = 12;
-    ctx.fillStyle = colors.yellow;
-    for (let i = 0; i < bigLogo.length; i++) {
-      ctx.fillText(bigLogo[i], canvas.width / 2, 100 + i * 18);
-    }
+    bigLogo.forEach((line, i) => ctx.fillText(line, canvas.width / 2, 78 + i * 17));
     ctx.restore();
 
-    ctx.font = '8px "Press Start 2P"';
-    ctx.fillStyle = colors.lightBlue;
-    ctx.fillText('RACE EDITION', canvas.width / 2, 180);
-
-    ctx.font = '10px "Press Start 2P"';
+    // Subtitle "Race Game"
+    ctx.save();
+    ctx.shadowColor = colors.lightBlue;
+    ctx.shadowBlur = 6;
+    ctx.font = '13px "Press Start 2P"';
     ctx.fillStyle = colors.white;
-    ctx.fillText('3 LAPS · BEAT YOUR TIME', canvas.width / 2, 218);
+    ctx.textAlign = 'center';
+    ctx.fillText('R A C E  G A M E', canvas.width / 2, 162);
+    ctx.restore();
 
-    // Bestenliste Button im Menü
-    ctx.font = '7px "Press Start 2P"';
-    ctx.fillStyle = colors.lightGray;
-    ctx.fillText('[ L ] BESTENLISTE', canvas.width / 2, 244);
-
-    ctx.fillStyle = 'rgba(255,212,82,0.08)';
-    ctx.fillRect(200, 258, 300, 90);
+    // Trennlinie
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 1;
-    ctx.strokeRect(200, 258, 300, 90);
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(160, 176); ctx.lineTo(540, 176);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Info-Zeile
+    ctx.font = '7px "Press Start 2P"';
+    ctx.fillStyle = colors.lightBlue;
+    ctx.textAlign = 'center';
+    ctx.fillText('3 RUNDEN · BESTZEIT SCHLAGEN', canvas.width / 2, 195);
+
+    // Bestenliste Hint
+    ctx.fillStyle = colors.lightGray;
+    ctx.fillText('[ L ]  BESTENLISTE DER WOCHE', canvas.width / 2, 215);
+
+    // Controls Box
+    ctx.fillStyle = 'rgba(255,212,82,0.07)';
+    ctx.fillRect(210, 230, 280, 86);
+    ctx.strokeStyle = colors.yellow;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(210, 230, 280, 86);
 
     ctx.font = '7px "Press Start 2P"';
-    const controls = ['↑  ACCELERATE', '↓  BRAKE / REVERSE', '← →  STEER', 'SPACE  BOOST'];
+    const controls = ['↑  GAS', '↓  BREMSE', '← →  LENKEN', 'SPACE  BOOST'];
     controls.forEach((c, i) => {
       ctx.fillStyle = i % 2 === 0 ? colors.white : colors.lightBlue;
-      ctx.fillText(c, canvas.width / 2, 275 + i * 16);
+      ctx.fillText(c, canvas.width / 2, 248 + i * 17);
     });
 
+    // Mini-Auto Animation
     ctx.save();
-    ctx.translate(350, 370);
+    ctx.translate(350, 340);
     drawMiniCar();
     ctx.restore();
 
-    // Username anzeigen falls gesetzt
+    // Username unten rechts
     if (username) {
       ctx.font = '6px "Press Start 2P"';
       ctx.fillStyle = colors.lightGray;
@@ -717,13 +729,11 @@ function initCarRaceGame() {
     ctx.fillStyle = colors.lightBlue;
     ctx.fillRect(-4, -6, 10, 12);
     ctx.fillStyle = colors.darkGray;
-    ctx.fillRect(-13, -10, 5, 3);
-    ctx.fillRect(-13, 7, 5, 3);
-    ctx.fillRect(8, -10, 5, 3);
-    ctx.fillRect(8, 7, 5, 3);
+    ctx.fillRect(-13, -10, 5, 3); ctx.fillRect(-13, 7, 5, 3);
+    ctx.fillRect(8, -10, 5, 3);  ctx.fillRect(8, 7, 5, 3);
   }
 
-  // ── Finished Screen ────────────────────────────
+  // ── Finished ──────────────────────────────────
   function drawFinished() {
     ctx.fillStyle = 'rgba(0,0,0,0.78)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -731,43 +741,35 @@ function initCarRaceGame() {
     if (showLeaderboard) {
       drawLeaderboardOverlay();
     } else {
-      // Warte-Animation während Score gespeichert wird
       ctx.font = '10px "Press Start 2P"';
       ctx.textAlign = 'center';
       ctx.fillStyle = colors.yellow;
       ctx.fillText('RACE OVER!', canvas.width / 2, 200);
       ctx.font = '7px "Press Start 2P"';
       ctx.fillStyle = colors.lightGray;
-      ctx.fillText(`TIME: ${finalTime.toFixed(2)}s`, canvas.width / 2, 230);
-      ctx.fillText('Speichere Ergebnis...', canvas.width / 2, 260);
+      ctx.fillText(`TIME: ${finalTime ? finalTime.toFixed(2) : '0.00'}s`, canvas.width / 2, 228);
+      ctx.fillText('Speichere Ergebnis...', canvas.width / 2, 256);
     }
 
     startButton.style.display = 'flex';
     startButton.textContent = 'PLAY AGAIN';
   }
 
-  // ── Game loop ──────────────────────────────────
+  // ── Game loop ─────────────────────────────────
   async function startGame() {
-    // Username beim ersten Start abfragen
-    if (!username) {
-      username = await getUsername();
-    }
+    if (!username) username = await getUsername();
 
     gameState = 'countdown';
     gameStarted = false;
     showLeaderboard = false;
     startButton.style.display = 'none';
-    skidMarks = [];
-    particles = [];
+    skidMarks = []; particles = [];
     car = new Car();
     track = new Track();
-    startTime = null;
-    currentTime = 0;
-    finalTime = 0;
+    startTime = null; currentTime = 0; finalTime = 0;
 
     if (gameLoop) clearInterval(gameLoop);
     gameLoop = setInterval(update, 1000 / 60);
-
     startCountdown(() => { gameState = 'playing'; });
   }
 
@@ -796,15 +798,16 @@ function initCarRaceGame() {
     }
   }
 
-  // L-Taste öffnet Bestenliste im Menü
-  document.addEventListener('keydown', async e => {
-    if (e.key === 'l' || e.key === 'L') {
-      if (gameState === 'menu') {
-        leaderboard = await loadLeaderboard();
+  // Tastatur-Shortcuts außerhalb des Inputs
+  document.addEventListener('keydown', e => {
+    if (inputActive) return;
+    if ((e.key === 'l' || e.key === 'L') && gameState === 'menu') {
+      loadLeaderboard().then(data => {
+        leaderboard = data;
         showLeaderboard = true;
         gameState = 'finished';
         draw();
-      }
+      });
     }
     if (e.key === 'Enter' && gameState === 'finished') {
       startGame();
