@@ -42,9 +42,8 @@ async function saveScore(username, timeSeconds) {
 }
 
 async function loadLeaderboard() {
-  const weekStart = getWeekStart();
   const data = await supabaseFetch(
-    `/rest/v1/scores?select=username,time_seconds&created_at=gte.${weekStart}&order=time_seconds.asc&limit=10`
+    `/rest/v1/scores?select=username,time_seconds&order=time_seconds.asc&limit=10`
   );
   return Array.isArray(data) ? data : [];
 }
