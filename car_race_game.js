@@ -417,16 +417,15 @@ function initCarRaceGame() {
 
   const myTime = Math.round(time * 1000) / 1000;
 
-  // Erst speichern, dann laden – aber parallel damit es schnell geht
   try {
     await saveScore(username, myTime);
     leaderboard = await loadLeaderboard();
   } catch(e) {
-    // Fallback: eigenen Eintrag zeigen
     leaderboard = [{ username: username, time_seconds: myTime }];
   }
 
   showLeaderboard = true;
+  draw(); // Explizit neu zeichnen NACHDEM leaderboard gefüllt ist
 }
 
   // ── HUD ───────────────────────────────────────
