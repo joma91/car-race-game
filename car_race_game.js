@@ -248,7 +248,7 @@ function initCarRaceGame() {
     ctx.lineTo(cx+Math.cos(na)*(r-10),cy+Math.sin(na)*(r-10));
     ctx.strokeStyle=colors.white; ctx.lineWidth=2; ctx.stroke();
     ctx.fillStyle=colors.yellow; ctx.font='6px "Press Start 2P"';
-    ctx.textAlign='center'; ctx.fillText('SPD',cx,cy+4);
+    ctx.textAlign='center'; ctx.fillText('',cx,cy+4);
     ctx.restore();
   }
 
