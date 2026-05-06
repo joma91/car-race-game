@@ -485,33 +485,54 @@ function initCarRaceGame() {
 
   // ── Leaderboard Canvas Overlay ─────────────────
   function drawLeaderboardOverlay() {
-    ctx.fillStyle='rgba(0,0,0,0.88)'; ctx.fillRect(120,50,460,310);
-    ctx.strokeStyle=colors.yellow; ctx.lineWidth=2; ctx.strokeRect(120,50,460,310);
-    ctx.font='10px "Press Start 2P"'; ctx.fillStyle=colors.yellow;
-    ctx.textAlign='center'; ctx.shadowColor=colors.yellow; ctx.shadowBlur=8;
-    ctx.fillText('WEEK TOP 10',canvas.width/2,80); ctx.shadowBlur=0;
-    ctx.font='6px "Press Start 2P"'; ctx.fillStyle=colors.lightBlue;
-    ctx.fillText(`KW ${getWeekNumber(new Date())} · Mo–So MEZ`,canvas.width/2,96);
-    if (leaderboard.length===0) {
-      ctx.font='7px "Press Start 2P"'; ctx.fillStyle=colors.lightGray;
-      ctx.fillText('Noch keine Einträge',canvas.width/2,200);
-    } else {
-      leaderboard.forEach((entry,i)=>{
-        const y=118+i*24, isMe=entry.username===username;
-        if(isMe){ctx.fillStyle='rgba(255,212,82,0.12)';ctx.fillRect(130,y-10,440,20);}
-        ctx.font='7px "Press Start 2P"'; ctx.textAlign='left';
-        ctx.fillStyle=i===0?'#FFD700':i===1?'#C0C0C0':i===2?'#CD7F32':colors.lightGray;
-        ctx.fillText(String(i+1).padStart(2,'0'),140,y+4);
-        ctx.fillStyle=isMe?colors.yellow:colors.white;
-        ctx.fillText(entry.username.substring(0,12),175,y+4);
-        ctx.textAlign='right'; ctx.fillStyle=isMe?colors.yellow:colors.lightBlue;
-        ctx.fillText(`${Number(entry.time_seconds).toFixed(2)}s`,550,y+4);
-      });
-    }
-    ctx.font='6px "Press Start 2P"'; ctx.fillStyle=colors.lightGray;
-    ctx.textAlign='center';
-    ctx.fillText('↓ Neustart oder vollständiges Ranking',canvas.width/2,348);
+  // Box groß genug für 10 Einträge
+  ctx.fillStyle = 'rgba(0,0,0,0.92)';
+  ctx.fillRect(80, 45, 540, 330);
+  ctx.strokeStyle = colors.yellow;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(80, 45, 540, 330);
+
+  ctx.font = '10px "Press Start 2P"';
+  ctx.fillStyle = colors.yellow;
+  ctx.textAlign = 'center';
+  ctx.shadowColor = colors.yellow;
+  ctx.shadowBlur = 8;
+  ctx.fillText('WEEK TOP 10', canvas.width / 2, 68);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '6px "Press Start 2P"';
+  ctx.fillStyle = colors.lightBlue;
+  ctx.fillText(`KW ${getWeekNumber(new Date())} · Mo–So MEZ`, canvas.width / 2, 82);
+
+  if (leaderboard.length === 0) {
+    ctx.font = '7px "Press Start 2P"';
+    ctx.fillStyle = colors.lightGray;
+    ctx.fillText('Noch keine Einträge', canvas.width / 2, 200);
+  } else {
+    leaderboard.forEach((entry, i) => {
+      const y = 100 + i * 26; // 26px pro Zeile, passt für 10 Einträge
+      const isMe = entry.username === username;
+      if (isMe) {
+        ctx.fillStyle = 'rgba(255,212,82,0.15)';
+        ctx.fillRect(88, y - 10, 524, 22);
+      }
+      ctx.font = '7px "Press Start 2P"';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : colors.lightGray;
+      ctx.fillText(String(i + 1).padStart(2, '0'), 96, y + 2);
+      ctx.fillStyle = isMe ? colors.yellow : colors.white;
+      ctx.fillText(entry.username.substring(0, 14), 128, y + 2);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = isMe ? colors.yellow : colors.lightBlue;
+      ctx.fillText(`${Number(entry.time_seconds).toFixed(2)}s`, 604, y + 2);
+    });
   }
+
+  ctx.font = '6px "Press Start 2P"';
+  ctx.fillStyle = colors.lightGray;
+  ctx.textAlign = 'center';
+  ctx.fillText('↓ Neustart oder Bestenliste', canvas.width / 2, 365);
+}
 
   // ── Menu ──────────────────────────────────────
   function drawMenu() {
