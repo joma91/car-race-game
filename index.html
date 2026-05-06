@@ -1,15 +1,119 @@
-     <!DOCTYPE html>
-     <html lang="de">
-     <head>
-         <meta charset="UTF-8">
-         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-         <title>Car Race Game</title>
-     </head>
-     <body>
-         <div id="game-container" style="position: relative; width: 700px; height: 400px; margin: 0 auto;">
-             <canvas id="gameCanvas" width="700" height="400" style="border: 1px solid black;"></canvas>
-             <button id="startButton" style="position: absolute; left: 300px; top: 200px; padding: 10px 20px; font-size: 20px; background-color: #FFD452; color: #2F343E; border: none; cursor: pointer;">Start Game</button>
-         </div>
-         <script src="car_race_game.js"></script>
-     </body>
-     </html>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarOnSale Race</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #1a1d24;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Press Start 2P', monospace;
+      overflow: hidden;
+    }
+
+    #gameWrapper {
+      position: relative;
+      display: inline-block;
+      border: 3px solid #FFD452;
+      box-shadow: 0 0 30px rgba(255, 212, 82, 0.4), 0 0 60px rgba(255, 212, 82, 0.1);
+    }
+
+    #gameWrapper::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #gameWrapper::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.01);
+      pointer-events: none;
+      z-index: 11;
+      animation: flicker 8s infinite;
+    }
+
+    @keyframes flicker {
+      0%, 95%, 100% { opacity: 1; }
+      96% { opacity: 0.92; }
+      97% { opacity: 1; }
+      98% { opacity: 0.95; }
+    }
+
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    #startButton {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 10px;
+      width: 200px;
+      height: 48px;
+      background: #FFD452;
+      color: #2F343E;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      box-shadow: 4px 4px 0 #b8951a;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    #startButton:hover {
+      transform: translateX(-50%) translateY(-2px);
+      box-shadow: 4px 6px 0 #b8951a;
+    }
+
+    #startButton:active {
+      transform: translateX(-50%) translateY(2px);
+      box-shadow: 2px 2px 0 #b8951a;
+    }
+
+    #keyHint {
+      margin-top: 12px;
+      color: #474B57;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      text-align: center;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+
+<div id="gameWrapper">
+  <canvas id="gameCanvas" width="700" height="420"></canvas>
+  <button id="startButton">START GAME</button>
+</div>
+<div id="keyHint">↑↓ SPEED  ←→ STEER  SPACE BOOST</div>
+
+<script src="car_race_game.js"></script>
+</body>
+</html>
