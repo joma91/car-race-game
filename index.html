@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>CarOnSale Race</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
@@ -17,26 +17,21 @@
       min-height: 100vh;
       font-family: 'Press Start 2P', monospace;
       overflow: hidden;
+      touch-action: none;
     }
 
     #gameWrapper {
       position: relative;
       display: inline-block;
       border: 3px solid #FFD452;
-      box-shadow: 0 0 30px rgba(255, 212, 82, 0.4), 0 0 60px rgba(255, 212, 82, 0.1);
+      box-shadow: 0 0 30px rgba(255,212,82,0.4), 0 0 60px rgba(255,212,82,0.1);
     }
 
     #gameWrapper::after {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.08) 2px,
-        rgba(0,0,0,0.08) 4px
-      );
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
       pointer-events: none;
       z-index: 10;
     }
@@ -58,116 +53,91 @@
       98% { opacity: 0.95; }
     }
 
-    canvas {
-      display: block;
-      image-rendering: pixelated;
-    }
+    canvas { display: block; image-rendering: pixelated; }
 
     #startButton {
       position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 10px;
-      width: 200px;
-      height: 48px;
-      background: #FFD452;
-      color: #2F343E;
-      border: none;
-      border-radius: 2px;
-      cursor: pointer;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 11px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 20;
-      box-shadow: 4px 4px 0 #b8951a;
+      left: 50%; transform: translateX(-50%);
+      bottom: 10px; width: 200px; height: 48px;
+      background: #FFD452; color: #2F343E;
+      border: none; border-radius: 2px; cursor: pointer;
+      font-family: 'Press Start 2P', monospace; font-size: 11px; font-weight: bold;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 20; box-shadow: 4px 4px 0 #b8951a;
       transition: transform 0.1s, box-shadow 0.1s;
     }
-
-    #startButton:hover {
-      transform: translateX(-50%) translateY(-2px);
-      box-shadow: 4px 6px 0 #b8951a;
-    }
-
-    #startButton:active {
-      transform: translateX(-50%) translateY(2px);
-      box-shadow: 2px 2px 0 #b8951a;
-    }
-
-    #leaderboardButton {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 10px;
-      width: 200px;
-      height: 48px;
-      background: transparent;
-      color: #FFD452;
-      border: 2px solid #FFD452;
-      border-radius: 2px;
-      cursor: pointer;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 9px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 20;
-      box-shadow: 4px 4px 0 #b8951a;
-      transition: transform 0.1s, box-shadow 0.1s;
-    }
-
-    #leaderboardButton:hover {
-      transform: translateX(-50%) translateY(-2px);
-      box-shadow: 4px 6px 0 #b8951a;
-      background: rgba(255, 212, 82, 0.1);
-    }
+    #startButton:hover { transform: translateX(-50%) translateY(-2px); box-shadow: 4px 6px 0 #b8951a; }
+    #startButton:active { transform: translateX(-50%) translateY(2px); box-shadow: 2px 2px 0 #b8951a; }
 
     #buttonRow {
-      position: absolute;
-      bottom: 10px;
-      left: 0;
-      right: 0;
-      display: none;
-      justify-content: center;
-      gap: 12px;
-      z-index: 20;
+      position: absolute; bottom: 10px; left: 0; right: 0;
+      display: none; justify-content: center; gap: 12px; z-index: 20;
     }
-
     #buttonRow button {
-      height: 48px;
-      border-radius: 2px;
-      cursor: pointer;
-      font-family: 'Press Start 2P', monospace;
-      font-weight: bold;
-      border: none;
+      height: 48px; border-radius: 2px; cursor: pointer;
+      font-family: 'Press Start 2P', monospace; font-weight: bold; border: none;
       transition: transform 0.1s, box-shadow 0.1s;
     }
+    #buttonRow button:hover { transform: translateY(-2px); }
+    #btnRestart { width: 160px; background: #FFD452; color: #2F343E; font-size: 10px; box-shadow: 4px 4px 0 #b8951a; }
+    #btnLeaderboard { width: 160px; background: transparent; color: #FFD452; border: 2px solid #FFD452 !important; font-size: 8px; box-shadow: 4px 4px 0 #474B57; }
+    #btnLeaderboard:hover { background: rgba(255,212,82,0.1); }
 
-    #buttonRow button:hover {
-      transform: translateY(-2px);
+    /* Touch Controls */
+    #touchControls {
+      display: none;
+      margin-top: 12px;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    #btnRestart {
-      width: 160px;
+    /* Nur auf Touch-Geräten anzeigen */
+    @media (hover: none) and (pointer: coarse) {
+      #touchControls { display: block; }
+      #keyHint { display: none; }
+    }
+
+    .touch-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .t-btn {
+      background: rgba(47,52,62,0.9);
+      border: 2px solid #474B57;
+      color: #FFD452;
+      font-size: 20px;
+      width: 64px; height: 64px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.05s, border-color 0.05s;
+    }
+    .t-btn.tactive {
+      background: #FFD452;
+      border-color: #FFD452;
+      color: #2F343E;
+    }
+    .t-btn-boost {
+      background: rgba(47,52,62,0.9);
+      border: 2px solid #FFD452;
+      color: #FFD452;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      height: 48px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      flex: 1;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .t-btn-boost.tactive {
       background: #FFD452;
       color: #2F343E;
-      font-size: 10px;
-      box-shadow: 4px 4px 0 #b8951a;
-    }
-
-    #btnLeaderboard {
-      width: 160px;
-      background: transparent;
-      color: #FFD452;
-      border: 2px solid #FFD452 !important;
-      font-size: 8px;
-      box-shadow: 4px 4px 0 #474B57;
-    }
-
-    #btnLeaderboard:hover {
-      background: rgba(255,212,82,0.1);
     }
 
     #keyHint {
@@ -190,6 +160,22 @@
     <button id="btnLeaderboard">BESTENLISTE</button>
   </div>
 </div>
+
+<!-- Touch Controls – nur auf Mobile sichtbar -->
+<div id="touchControls">
+  <div class="touch-row">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div></div>
+      <div class="t-btn" data-key="ArrowUp">↑</div>
+      <div></div>
+      <div class="t-btn" data-key="ArrowLeft">←</div>
+      <div class="t-btn" data-key="ArrowDown">↓</div>
+      <div class="t-btn" data-key="ArrowRight">→</div>
+    </div>
+    <div class="t-btn-boost" data-key="Space">⚡ BOOST</div>
+  </div>
+</div>
+
 <div id="keyHint">↑↓ SPEED  ←→ STEER  SPACE BOOST</div>
 
 <script src="car_race_game.js" defer></script>
