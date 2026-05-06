@@ -12,7 +12,9 @@ async function supabaseFetch(path, options = {}) {
       ...options.headers
     }
   });
-  return res.json();
+  // Leere Antworten (z.B. bei POST mit return=minimal) nicht als JSON parsen
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 function getWeekStart() {
