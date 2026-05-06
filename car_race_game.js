@@ -415,7 +415,31 @@ function initCarRaceGame() {
     ctx.font = '9px "Press Start 2P"';
     ctx.fillText(`${gameStarted ? currentTime.toFixed(2) : '0.00'}s`, canvas.width - 10, 22);
 
+    // Speedometer
     drawSpeedometer(car.speed);
+
+    // Boost-Tank neben Tachometer
+    const boostPct = 1 - Math.min(car.boostCooldown / 120, 1);
+    const tankX = 610, tankY = 345, tankW = 12, tankH = 60;
+    // Hintergrund
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(tankX - 2, tankY - tankH - 2, tankW + 4, tankH + 4);
+    // Leerer Tank
+    ctx.fillStyle = colors.lightGray;
+    ctx.fillRect(tankX, tankY - tankH, tankW, tankH);
+    // Füllstand
+    const fillH = tankH * boostPct;
+    ctx.fillStyle = boostPct === 1 ? colors.yellow : boostPct > 0.3 ? '#ff9900' : colors.red;
+    ctx.fillRect(tankX, tankY - fillH, tankW, fillH);
+    // Rahmen
+    ctx.strokeStyle = colors.yellow;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(tankX, tankY - tankH, tankW, tankH);
+    // Label
+    ctx.font = '5px "Press Start 2P"';
+    ctx.fillStyle = colors.white;
+    ctx.textAlign = 'center';
+    ctx.fillText('NOS', tankX + tankW / 2, tankY + 8);
   }
 
   function drawHeaderLogo(centerX, y) {
@@ -618,8 +642,11 @@ function initCarRaceGame() {
 
   startButton.onclick = startGame;
   positionButton(startButton);
-  draw();
-  setInterval(() => { if (gameState === 'menu') draw(); }, 50);
+  // Warte bis Google Font geladen ist
+  document.fonts.ready.then(() => {
+    draw();
+    setInterval(() => { if (gameState === 'menu') draw(); }, 50);
+  });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
