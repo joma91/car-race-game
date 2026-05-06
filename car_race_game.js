@@ -1,122 +1,3 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <title>CarOnSale Race</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background: #1a1d24;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      font-family: 'Press Start 2P', monospace;
-      overflow: hidden;
-    }
-
-    #gameWrapper {
-      position: relative;
-      display: inline-block;
-      border: 3px solid #FFD452;
-      box-shadow: 0 0 30px rgba(255, 212, 82, 0.4), 0 0 60px rgba(255, 212, 82, 0.1);
-    }
-
-    /* CRT Scanline overlay */
-    #gameWrapper::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.08) 2px,
-        rgba(0,0,0,0.08) 4px
-      );
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    /* CRT flicker animation */
-    #gameWrapper::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(255,255,255,0.01);
-      pointer-events: none;
-      z-index: 11;
-      animation: flicker 8s infinite;
-    }
-
-    @keyframes flicker {
-      0%, 95%, 100% { opacity: 1; }
-      96% { opacity: 0.92; }
-      97% { opacity: 1; }
-      98% { opacity: 0.95; }
-    }
-
-    canvas {
-      display: block;
-      image-rendering: pixelated;
-    }
-
-    #startButton {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 10px;
-      width: 200px;
-      height: 48px;
-      background: #FFD452;
-      color: #2F343E;
-      border: none;
-      border-radius: 2px;
-      cursor: pointer;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 11px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 20;
-      box-shadow: 4px 4px 0 #b8951a;
-      transition: transform 0.1s, box-shadow 0.1s;
-    }
-
-    #startButton:hover {
-      transform: translateX(-50%) translateY(-2px);
-      box-shadow: 4px 6px 0 #b8951a;
-    }
-
-    #startButton:active {
-      transform: translateX(-50%) translateY(2px);
-      box-shadow: 2px 2px 0 #b8951a;
-    }
-
-    /* Keyboard hint */
-    #keyHint {
-      margin-top: 12px;
-      color: #474B57;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      text-align: center;
-      line-height: 1.8;
-    }
-  </style>
-</head>
-<body>
-
-<div id="gameWrapper">
-  <canvas id="gameCanvas" width="700" height="420"></canvas>
-  <button id="startButton">START GAME</button>
-</div>
-<div id="keyHint">↑↓ SPEED  ←→ STEER  SPACE BOOST</div>
-
-<script>
 function initCarRaceGame() {
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
@@ -168,25 +49,21 @@ function initCarRaceGame() {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Arc track
     ctx.beginPath();
     ctx.arc(cx, cy, r - 6, Math.PI * 0.75, Math.PI * 2.25, false);
     ctx.strokeStyle = colors.lightGray;
     ctx.lineWidth = 4;
     ctx.stroke();
 
-    // Arc fill
     const maxSpeed = 8;
     const pct = Math.min(Math.abs(speed) / maxSpeed, 1);
     const startA = Math.PI * 0.75;
-    const endA = startA + pct * Math.PI * 1.5;
     ctx.beginPath();
-    ctx.arc(cx, cy, r - 6, startA, endA, false);
+    ctx.arc(cx, cy, r - 6, startA, startA + pct * Math.PI * 1.5, false);
     ctx.strokeStyle = pct > 0.7 ? colors.red : colors.yellow;
     ctx.lineWidth = 4;
     ctx.stroke();
 
-    // Needle
     const needleAngle = startA + pct * Math.PI * 1.5;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
@@ -260,7 +137,6 @@ function initCarRaceGame() {
       if (keys['ArrowUp']) this.speed += accel;
       if (keys['ArrowDown']) this.speed -= 0.15;
 
-      // Boost
       if (keys['Space'] && this.boostCooldown <= 0) {
         this.boosting = true;
         this.boostCooldown = 120;
@@ -282,7 +158,6 @@ function initCarRaceGame() {
       let newY = this.y + Math.sin(this.angle) * this.speed;
 
       if (this.isOnTrack(newX, newY)) {
-        // Skid marks when turning fast
         if (Math.abs(this.speed) > 3 && (keys['ArrowLeft'] || keys['ArrowRight'])) {
           skidMarks.push({ x: this.x, y: this.y, life: 1 });
           if (skidMarks.length > 200) skidMarks.shift();
@@ -294,7 +169,6 @@ function initCarRaceGame() {
         this.speed *= -0.3;
       }
 
-      // Lap logic
       if (this.x > 350 && this.x < 400 && this.y > 300 && this.y < 340) {
         if (this.checkpoint === 1) {
           if (this.lap < 3) {
@@ -318,7 +192,6 @@ function initCarRaceGame() {
     }
 
     draw() {
-      // Shadow
       ctx.save();
       ctx.translate(this.x + 3, this.y + 4);
       ctx.rotate(this.angle);
@@ -328,7 +201,6 @@ function initCarRaceGame() {
       ctx.fill();
       ctx.restore();
 
-      // Boost flame
       if (this.boosting) {
         ctx.save();
         ctx.translate(this.x, this.y);
@@ -348,31 +220,25 @@ function initCarRaceGame() {
       ctx.translate(this.x, this.y);
       ctx.rotate(this.angle);
 
-      // Body
       ctx.fillStyle = colors.yellow;
       ctx.fillRect(-15, -8, 30, 16);
 
-      // Cockpit
       ctx.fillStyle = colors.lightBlue;
       ctx.fillRect(-4, -6, 10, 12);
 
-      // Windows tint
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fillRect(-3, -5, 8, 10);
 
-      // Wheels
       ctx.fillStyle = colors.darkGray;
       ctx.fillRect(-13, -10, 5, 3);
       ctx.fillRect(-13, 7, 5, 3);
       ctx.fillRect(8, -10, 5, 3);
       ctx.fillRect(8, 7, 5, 3);
 
-      // Wheel shine
       ctx.fillStyle = '#666';
       ctx.fillRect(-11, -9, 2, 1);
       ctx.fillRect(9, -9, 2, 1);
 
-      // Front detail
       ctx.fillStyle = '#fff';
       ctx.fillRect(13, -4, 3, 2);
       ctx.fillRect(13, 2, 3, 2);
@@ -389,14 +255,11 @@ function initCarRaceGame() {
     }
 
     draw() {
-      // Background
       ctx.fillStyle = colors.darkGray;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Infield decorations
       this.drawInfield();
 
-      // Track surface
       ctx.fillStyle = colors.lightGray;
       ctx.beginPath();
       ctx.moveTo(this.outerPoints[0][0], this.outerPoints[0][1]);
@@ -411,7 +274,6 @@ function initCarRaceGame() {
       ctx.closePath();
       ctx.fill();
 
-      // Skid marks
       for (let s of skidMarks) {
         ctx.save();
         ctx.globalAlpha = s.life * 0.35;
@@ -425,7 +287,6 @@ function initCarRaceGame() {
       this.drawBrickWall(this.outerPoints);
       this.drawBrickWall(this.innerPoints);
 
-      // Center dashed line
       ctx.strokeStyle = 'rgba(255,255,255,0.4)';
       ctx.setLineDash([15, 15]);
       ctx.lineWidth = 2;
@@ -439,7 +300,6 @@ function initCarRaceGame() {
       ctx.setLineDash([]);
       ctx.lineWidth = 1;
 
-      // Checkered finish line
       const sq = 10;
       for (let i = 0; i < 4; i++) {
         for (let j = 0; j < 5; j++) {
@@ -448,7 +308,6 @@ function initCarRaceGame() {
         }
       }
 
-      // Finish line label
       ctx.save();
       ctx.translate(375, 298);
       ctx.font = '6px "Press Start 2P"';
@@ -459,11 +318,9 @@ function initCarRaceGame() {
     }
 
     drawInfield() {
-      // Infield grass pattern
       ctx.fillStyle = '#1e2a1e';
       ctx.fillRect(105, 105, 490, 190);
 
-      // Grid lines
       ctx.strokeStyle = 'rgba(255,255,255,0.04)';
       ctx.lineWidth = 1;
       for (let x = 110; x < 595; x += 30) {
@@ -473,7 +330,6 @@ function initCarRaceGame() {
         ctx.beginPath(); ctx.moveTo(105, y); ctx.lineTo(595, y); ctx.stroke();
       }
 
-      // CarOnSale ASCII logo in infield
       ctx.save();
       ctx.shadowColor = colors.yellow;
       ctx.shadowBlur = 8;
@@ -515,7 +371,6 @@ function initCarRaceGame() {
           ctx.strokeStyle = colors.brickDark;
           ctx.lineWidth = 1;
           ctx.strokeRect(0, -brickH / 2, brickW, brickH);
-          // mortar highlight
           ctx.fillStyle = 'rgba(255,255,255,0.07)';
           ctx.fillRect(1, -brickH / 2 + 1, brickW - 2, 2);
           ctx.restore();
@@ -531,7 +386,6 @@ function initCarRaceGame() {
 
   // ── HUD ────────────────────────────────────────
   function drawHUD() {
-    // Top bar
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
     ctx.fillRect(0, 0, canvas.width, 42);
     ctx.strokeStyle = colors.yellow;
@@ -540,13 +394,11 @@ function initCarRaceGame() {
     ctx.moveTo(0, 42); ctx.lineTo(canvas.width, 42);
     ctx.stroke();
 
-    // ASCII Logo in top bar
     ctx.font = '7px "Press Start 2P"';
     ctx.fillStyle = colors.yellow;
     ctx.textAlign = 'center';
     ctx.fillText('[ CarOnSale RACE ]', canvas.width / 2, 26);
 
-    // Lap indicators
     ctx.textAlign = 'left';
     ctx.font = '9px "Press Start 2P"';
     ctx.fillStyle = colors.white;
@@ -558,17 +410,14 @@ function initCarRaceGame() {
       ctx.fillText(i === car.lap ? `[${i}]` : ` ${i} `, lx, 22);
     }
 
-    // Time
     ctx.textAlign = 'right';
     ctx.fillStyle = colors.lightBlue;
     ctx.font = '9px "Press Start 2P"';
     ctx.fillText(`${gameStarted ? currentTime.toFixed(2) : '0.00'}s`, canvas.width - 10, 22);
 
-    // Speedometer
     drawSpeedometer(car.speed);
   }
 
-  // ── Draw Header logo ───────────────────────────
   function drawHeaderLogo(centerX, y) {
     ctx.font = '8px "Press Start 2P"';
     ctx.textAlign = 'center';
@@ -612,7 +461,6 @@ function initCarRaceGame() {
     ctx.fillStyle = colors.darkGray;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Top bar
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
     ctx.fillRect(0, 0, canvas.width, 42);
     ctx.strokeStyle = colors.yellow;
@@ -621,7 +469,6 @@ function initCarRaceGame() {
     ctx.moveTo(0, 42); ctx.lineTo(canvas.width, 42); ctx.stroke();
     drawHeaderLogo(canvas.width / 2, 26);
 
-    // Grid bg
     ctx.strokeStyle = 'rgba(255,255,255,0.04)';
     for (let x = 0; x < canvas.width; x += 30) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
@@ -630,7 +477,6 @@ function initCarRaceGame() {
       ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
     }
 
-    // Big ASCII Art Logo - CarOnSale
     ctx.font = '8px "Press Start 2P"';
     ctx.textAlign = 'center';
     const bigLogo = [
@@ -652,12 +498,10 @@ function initCarRaceGame() {
     ctx.fillStyle = colors.lightBlue;
     ctx.fillText('RACE EDITION', canvas.width / 2, 180);
 
-    // Subtitle
     ctx.font = '10px "Press Start 2P"';
     ctx.fillStyle = colors.white;
     ctx.fillText('3 LAPS · BEAT YOUR TIME', canvas.width / 2, 230);
 
-    // Controls box
     ctx.fillStyle = 'rgba(255,212,82,0.08)';
     ctx.fillRect(200, 255, 300, 90);
     ctx.strokeStyle = colors.yellow;
@@ -665,14 +509,12 @@ function initCarRaceGame() {
     ctx.strokeRect(200, 255, 300, 90);
 
     ctx.font = '7px "Press Start 2P"';
-    ctx.fillStyle = colors.lightGray;
     const controls = ['↑  ACCELERATE', '↓  BRAKE / REVERSE', '← →  STEER', 'SPACE  BOOST'];
     controls.forEach((c, i) => {
       ctx.fillStyle = i % 2 === 0 ? colors.white : colors.lightBlue;
       ctx.fillText(c, canvas.width / 2, 272 + i * 16);
     });
 
-    // Decorative mini car in menu
     ctx.save();
     ctx.translate(350, 360);
     drawMiniCar();
@@ -698,7 +540,6 @@ function initCarRaceGame() {
     ctx.fillStyle = 'rgba(0,0,0,0.78)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Trophy ASCII
     ctx.font = '10px "Press Start 2P"';
     ctx.textAlign = 'center';
     ctx.fillStyle = colors.yellow;
@@ -776,13 +617,14 @@ function initCarRaceGame() {
   }
 
   startButton.onclick = startGame;
-  startButton.style.display = 'flex';
+  positionButton(startButton);
   draw();
-  // Animate menu car
   setInterval(() => { if (gameState === 'menu') draw(); }, 50);
 }
 
-document.addEventListener('DOMContentLoaded', initCarRaceGame);
-</script>
-</body>
-</html>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM fully loaded and parsed');
+  initCarRaceGame();
+});
+
+console.log('Script loaded');
