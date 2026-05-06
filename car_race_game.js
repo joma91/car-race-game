@@ -304,7 +304,7 @@ function initCarRaceGame() {
       const frame = (near || wave) ? 1 : 0;
       const col = i%3===0 ? colors.yellow : i%3===1 ? colors.lightBlue : colors.white;
       ctx.save();
-      ctx.font = '7px "Press Start 2P"';
+      ctx.font = '3px "Press Start 2P"';
       ctx.fillStyle = col;
       ctx.textAlign = 'center';
       // Oben an der Außenwand (y≈55), kleine Figuren oberhalb
