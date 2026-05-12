@@ -74,7 +74,7 @@ function initSoccerGame() {
 
   // ── State ─────────────────────────────────────
   let gameState = 'menu';
-  let goals = 0, timeLeft = 60, timerInterval = null;
+  let goals = 0, timeLeft = 30, timerInterval = null;
   let countdown = 0, finalGoals = 0;
   let leaderboard = [], showLeaderboard = false;
   let username = localStorage.getItem('cos_kick_username') || null;
@@ -940,7 +940,7 @@ function initSoccerGame() {
     if (!username) username = await getUsername();
     gameState = 'countdown';
     showLeaderboard = false;
-    goals = 0; timeLeft = 60;
+    goals = 0; timeLeft = 30;
     streakCount = 0; streakBonus = false; streakTimer = 0;
     particles = []; confetti = [];
     shot = null; player = null; keeper = null;
