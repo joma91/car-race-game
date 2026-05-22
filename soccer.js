@@ -1,6 +1,6 @@
 // ── Supabase Config ───────────────────────────
-const SUPABASE_URL = 'DEINE_SUPABASE_URL';
-const SUPABASE_KEY = 'DEIN_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://rwuogkjbpnhahdvudxax.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_O27RaZhwl75cqBRIuknJVQ_nwydUJC8';
 
 async function supabaseFetch(path, options = {}) {
   const res = await fetch(SUPABASE_URL + path, {
