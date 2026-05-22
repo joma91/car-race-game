@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -126,13 +126,11 @@
       letter-spacing: 1px;
     }
 
-    /* Show touch controls on touch devices */
     @media (pointer: coarse) {
       #touchControls { display: flex; }
       canvas { max-height: calc(100dvh - 200px); }
     }
 
-    /* Responsive canvas */
     @media (max-width: 720px) {
       canvas { width: 100vw; height: calc(100vw * 0.571); }
     }
@@ -142,11 +140,11 @@
   <div id="gameWrapper">
     <canvas id="gameCanvas" width="700" height="400"></canvas>
 
-    <button id="startButton">ANPFIFF ▶</button>
+    <button id="startButton">KICK OFF ▶</button>
 
     <div id="buttonRow">
-      <button id="btnRestart">↺ NEUSTART</button>
-      <button id="btnLeaderboard">⚽ BESTENLISTE</button>
+      <button id="btnRestart">↺ PLAY AGAIN</button>
+      <button id="btnLeaderboard">⚽ TOP SCORES</button>
     </div>
 
     <!-- Touch Controls -->
@@ -158,7 +156,7 @@
 
       <div id="touchCenter">
         <div class="tBtn tBtnWide" data-key="ArrowUp">↑ POWER</div>
-        <div class="tBtn tBtnWide" data-key="Space">SCHUSS</div>
+        <div class="tBtn tBtnWide" data-key="Space">SHOOT</div>
         <div class="tBtn tBtnWide" data-key="ArrowDown">CHIP ↗</div>
       </div>
     </div>
