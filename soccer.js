@@ -1,5 +1,4 @@
 // ── Supabase Config ───────────────────────────
-// WICHTIG: Diese Werte mit deinen eigenen ersetzen!
 const SUPABASE_URL = 'DEINE_SUPABASE_URL';
 const SUPABASE_KEY = 'DEIN_SUPABASE_ANON_KEY';
 
@@ -110,7 +109,6 @@ function initSoccerGame() {
       }
     }
     draw() {
-      // Shadow
       ctx.save();
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.beginPath();
@@ -118,35 +116,27 @@ function initSoccerGame() {
       ctx.fill();
       ctx.restore();
 
-      // Body (retro pixel style)
       ctx.save();
       ctx.translate(this.x, this.y);
-      // Legs
       ctx.fillStyle = '#fff';
       ctx.fillRect(-6, 10, 5, 12);
       ctx.fillRect(1, 10, 5, 12);
-      // Jersey (team color: yellow)
       ctx.fillStyle = colors.yellow;
       ctx.fillRect(-9, -2, 18, 14);
-      // Number
       ctx.fillStyle = colors.darkGray;
       ctx.font = '5px "Press Start 2P"';
       ctx.textAlign = 'center';
       ctx.fillText('1', 0, 8);
-      // Head
       ctx.fillStyle = '#f0c080';
       ctx.fillRect(-5, -14, 10, 12);
-      // Hair
       ctx.fillStyle = colors.darkGray;
       ctx.fillRect(-5, -14, 10, 4);
       ctx.restore();
 
-      // Ball (at player feet if hasBall)
       if (this.hasBall && !shot) {
         drawBall(this.x, this.y + 22, 7);
       }
 
-      // Power bar
       if (this.powerCharging && !shot) {
         const bw = 60, bh = 8;
         const bx = this.x - bw / 2, by = this.y - 40;
@@ -186,13 +176,15 @@ function initSoccerGame() {
       if (this.diving) return;
       this.reactionTimer++;
       if (this.reactionTimer >= this.reactionDelay && shot) {
-        this.targetX = shot.x + (Math.random() - 0.5) * 40; // some error
+        this.targetX = shot.x + (Math.random() - 0.5) * 120;
         this.reactionTimer = 0;
       }
-      // lazy patrol when no shot
       if (!shot) {
-        if (Math.random() < 0.008) {
+        if (Math.random() < 0.04) {
           this.targetX = 160 + Math.random() * (W - 320);
+        }
+        if (Math.random() < 0.005) {
+          this.targetX = Math.random() < 0.5 ? 170 : W - 170;
         }
       }
       const dx = this.targetX - this.x;
@@ -201,7 +193,6 @@ function initSoccerGame() {
     }
     draw() {
       ctx.save();
-      // Shadow
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.beginPath();
       ctx.ellipse(this.x + 3, this.y + 18, 12, 5, 0, 0, Math.PI * 2);
@@ -210,21 +201,16 @@ function initSoccerGame() {
       ctx.translate(this.x, this.y);
       if (this.diving) ctx.rotate(this.diveDir * 0.5);
 
-      // Legs
       ctx.fillStyle = '#2255cc';
       ctx.fillRect(-6, 10, 5, 12);
       ctx.fillRect(1, 10, 5, 12);
-      // Jersey (keeper: green gloves)
       ctx.fillStyle = '#1a8a3a';
       ctx.fillRect(-9, -2, 18, 14);
-      // Gloves
       ctx.fillStyle = '#ffa500';
       ctx.fillRect(-12, 2, 4, 6);
       ctx.fillRect(8, 2, 4, 6);
-      // Head
       ctx.fillStyle = '#f0c080';
       ctx.fillRect(-5, -14, 10, 12);
-      // Cap
       ctx.fillStyle = '#ff4400';
       ctx.fillRect(-6, -15, 12, 4);
       ctx.restore();
@@ -272,7 +258,6 @@ function initSoccerGame() {
     shot.vy += shot.arc;
     shot.arc += 0.004;
 
-    // Keeper check
     if (shot.y < 120 && keeper) {
       if (keeper.checkSave(shot.x, shot.y, shot.r)) {
         spawnParticles(shot.x, shot.y, colors.red, 12);
@@ -284,13 +269,11 @@ function initSoccerGame() {
       }
     }
 
-    // Goal check: goal is between x=180..520, y < 65
     if (shot.y < 65 && shot.x > 195 && shot.x < W - 195) {
       onGoal();
       return;
     }
 
-    // Miss: out of bounds
     if (shot.y < 20 || shot.x < 20 || shot.x > W - 20 || shot.y > H + 20) {
       spawnParticles(shot.x, Math.max(20, shot.y), '#888', 8);
       streakCount = 0;
@@ -311,7 +294,6 @@ function initSoccerGame() {
     ctx.strokeStyle = '#222';
     ctx.lineWidth = 1;
     ctx.stroke();
-    // Pentagon pattern
     ctx.fillStyle = '#222';
     ctx.beginPath();
     ctx.arc(x, y, r * 0.35, 0, Math.PI * 2);
@@ -369,7 +351,7 @@ function initSoccerGame() {
     }
   }
 
-  // ── Konfetti ──────────────────────────────────
+  // ── Confetti ──────────────────────────────────
   function spawnConfetti() {
     for (let i = 0; i < 150; i++) confetti.push({
       x: Math.random() * W, y: -10 - Math.random() * 80,
@@ -412,21 +394,17 @@ function initSoccerGame() {
 
   // ── Pitch ─────────────────────────────────────
   function drawPitch() {
-    // Sky / stands
     ctx.fillStyle = '#1a1d24';
     ctx.fillRect(0, 0, W, H);
 
-    // Stands area (top)
     ctx.fillStyle = '#252930';
     ctx.fillRect(0, 0, W, H - 60);
 
-    // Grass
     for (let i = 0; i < 8; i++) {
       ctx.fillStyle = i % 2 === 0 ? colors.grass1 : colors.grass2;
       ctx.fillRect(0, H - 60 - i * 36, W, 36);
     }
 
-    // Centre circle
     ctx.save();
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 2;
@@ -435,7 +413,6 @@ function initSoccerGame() {
     ctx.stroke();
     ctx.restore();
 
-    // Centre line
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 2;
     ctx.setLineDash([10, 10]);
@@ -445,23 +422,17 @@ function initSoccerGame() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Penalty box
     ctx.strokeStyle = 'rgba(255,255,255,0.2)';
     ctx.lineWidth = 2;
     ctx.strokeRect(150, 55, W - 300, 130);
-
-    // Six-yard box
     ctx.strokeRect(250, 55, W - 500, 55);
 
-    // ── Goal net ──
     const gx = 195, gw = W - 390, gh = 52;
-    // Posts
     ctx.fillStyle = colors.white;
     ctx.fillRect(gx - 6, 35, 6, gh + 10);
     ctx.fillRect(gx + gw, 35, 6, gh + 10);
     ctx.fillRect(gx - 6, 33, gw + 12, 4);
 
-    // Net
     ctx.strokeStyle = colors.netGray;
     ctx.lineWidth = 1;
     for (let x = gx; x <= gx + gw; x += 14) {
@@ -471,7 +442,6 @@ function initSoccerGame() {
       ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx + gw, y); ctx.stroke();
     }
 
-    // Goal flash
     if (goalFlash > 0) {
       ctx.save();
       ctx.globalAlpha = (goalFlash / 20) * 0.4;
@@ -481,7 +451,6 @@ function initSoccerGame() {
       goalFlash--;
     }
 
-    // Spectator seats bg
     ctx.fillStyle = '#1e2228';
     ctx.fillRect(0, H - 60, W, 60);
   }
@@ -494,13 +463,11 @@ function initSoccerGame() {
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(0, 36); ctx.lineTo(W, 36); ctx.stroke();
 
-    // Title
     ctx.font = '7px "Press Start 2P"';
     ctx.fillStyle = colors.yellow;
     ctx.textAlign = 'center';
     ctx.fillText('[ CarOnSale KICK ]', W / 2, 22);
 
-    // Goals
     ctx.textAlign = 'left';
     ctx.font = '9px "Press Start 2P"';
     ctx.fillStyle = colors.white;
@@ -508,13 +475,11 @@ function initSoccerGame() {
     ctx.fillStyle = colors.yellow;
     ctx.fillText(String(goals).padStart(2, '0'), 30, 22);
 
-    // Timer
     ctx.textAlign = 'right';
     ctx.fillStyle = timeLeft <= 10 ? colors.red : colors.lightBlue;
     ctx.font = '9px "Press Start 2P"';
     ctx.fillText(`${String(timeLeft).padStart(2, '0')}s`, W - 10, 22);
 
-    // Streak indicator
     if (streakBonus) {
       const pulse = Math.sin(Date.now() * 0.01) > 0;
       ctx.font = '6px "Press Start 2P"';
@@ -525,43 +490,152 @@ function initSoccerGame() {
       if (streakTimer <= 0) { streakBonus = false; streakCount = 0; }
     }
 
-    // Missed indicator
     if (missedShot && missedTimer > 0) {
       ctx.font = '7px "Press Start 2P"';
       ctx.fillStyle = colors.red;
       ctx.globalAlpha = missedTimer / 90;
       ctx.textAlign = 'center';
-      ctx.fillText('VERSCHOSSEN!', W / 2, H / 2 + 40);
+      ctx.fillText('MISSED!', W / 2, H / 2 + 40);
       ctx.globalAlpha = 1;
       missedTimer--;
       if (missedTimer <= 0) missedShot = false;
     }
 
-    // Controls hint (bottom)
     if (!shot && player && player.hasBall && gameState === 'playing') {
       ctx.font = '5px "Press Start 2P"';
       ctx.fillStyle = 'rgba(255,255,255,0.4)';
       ctx.textAlign = 'center';
       if (!player.powerCharging) {
-        ctx.fillText('↑ POWER LADEN · SPACE = SCHUSS · ↓ = CHIP', W / 2, H - 68);
+        ctx.fillText('↑ HOLD FOR POWER · SPACE = SHOOT · ↓ = CHIP', W / 2, H - 68);
       } else {
-        ctx.fillText('SPACE = SCHUSS · ↓ = CHIP', W / 2, H - 68);
+        ctx.fillText('SPACE = SHOOT · ↓ = CHIP', W / 2, H - 68);
       }
     }
   }
 
-  // ── Menu ─────────────────────────────────────
+  // ── FIGlet: "CarOnSale" in LED dot-matrix style ──
+  // Each letter = 7 rows × 5 cols of dots (1=lit, 0=dim)
+  function drawFiglet(centerX, topY) {
+    const glyphs = {
+      'C': [
+        [0,1,1,1,0],
+        [1,0,0,0,1],
+        [1,0,0,0,0],
+        [1,0,0,0,0],
+        [1,0,0,0,0],
+        [1,0,0,0,1],
+        [0,1,1,1,0],
+      ],
+      'a': [
+        [0,1,1,1,0],
+        [0,0,0,0,1],
+        [0,1,1,1,1],
+        [1,0,0,0,1],
+        [1,0,0,1,1],
+        [0,1,1,0,1],
+        [0,0,0,0,0],
+      ],
+      'r': [
+        [0,0,0,0,0],
+        [1,0,1,1,0],
+        [1,1,0,0,1],
+        [1,0,0,0,0],
+        [1,0,0,0,0],
+        [1,0,0,0,0],
+        [0,0,0,0,0],
+      ],
+      'O': [
+        [0,1,1,1,0],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [0,1,1,1,0],
+      ],
+      'n': [
+        [0,0,0,0,0],
+        [1,1,1,1,0],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+        [0,0,0,0,0],
+      ],
+      'S': [
+        [0,1,1,1,1],
+        [1,0,0,0,0],
+        [1,0,0,0,0],
+        [0,1,1,1,0],
+        [0,0,0,0,1],
+        [0,0,0,0,1],
+        [1,1,1,1,0],
+      ],
+      'l': [
+        [1,1,0,0,0],
+        [0,1,0,0,0],
+        [0,1,0,0,0],
+        [0,1,0,0,0],
+        [0,1,0,0,0],
+        [0,1,0,0,0],
+        [0,1,1,1,0],
+      ],
+      'e': [
+        [0,1,1,1,0],
+        [1,0,0,0,1],
+        [1,1,1,1,1],
+        [1,0,0,0,0],
+        [1,0,0,0,1],
+        [0,1,1,1,0],
+        [0,0,0,0,0],
+      ],
+    };
+
+    const letters = ['C','a','r','O','n','S','a','l','e'];
+    const dotW = 4, dotH = 3;
+    const dotGapX = 2, dotGapY = 2;
+    const colW = dotW + dotGapX;
+    const rowH = dotH + dotGapY;
+    const letterW = 5 * colW;
+    const letterGap = 5;
+    const totalW = letters.length * letterW + (letters.length - 1) * letterGap;
+    const startX = centerX - totalW / 2;
+
+    ctx.save();
+    letters.forEach((ch, li) => {
+      const glyph = glyphs[ch];
+      if (!glyph) return;
+      const lx = startX + li * (letterW + letterGap);
+      glyph.forEach((row, ri) => {
+        row.forEach((on, ci) => {
+          const px = lx + ci * colW;
+          const py = topY + ri * rowH;
+          if (on) {
+            ctx.shadowColor = '#FFD452';
+            ctx.shadowBlur = 7;
+            ctx.fillStyle = '#FFD452';
+          } else {
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(255,212,82,0.09)';
+          }
+          ctx.fillRect(px, py, dotW, dotH);
+        });
+      });
+    });
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // ── Menu ──────────────────────────────────────
   function drawMenu() {
     ctx.fillStyle = colors.darkGray;
     ctx.fillRect(0, 0, W, H);
 
-    // Grid BG
     ctx.strokeStyle = 'rgba(255,255,255,0.04)';
     ctx.lineWidth = 1;
     for (let x = 0; x < W; x += 30) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
     for (let y = 0; y < H; y += 30) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
-    // Header bar
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
     ctx.fillRect(0, 0, W, 42);
     ctx.strokeStyle = colors.yellow;
@@ -574,18 +648,8 @@ function initSoccerGame() {
     ctx.fillText('[ CarOnSale KICK ]', W / 2, 26);
     ctx.shadowBlur = 0;
 
-    // ASCII Soccer ball logo
-    ctx.save();
-    ctx.font = '11px "Press Start 2P"';
-    ctx.fillStyle = colors.yellow;
-    ctx.textAlign = 'center';
-    ctx.shadowColor = colors.yellow; ctx.shadowBlur = 10;
-    ['  ____  ____  __ __ ____  ', '|  _ \\|  _ \\|  \\/  |  _ \\ ',
-     '| | | | |_) | |\\/| | |_) |', '|_| |_|____/|_|  |_|____/ '].forEach((l, i) =>
-      ctx.fillText(l, W / 2, 75 + i * 17)
-    );
-    ctx.shadowBlur = 0;
-    ctx.restore();
+    // LED dot-matrix FIGlet: "CarOnSale"
+    drawFiglet(W / 2, 54);
 
     ctx.font = '11px "Press Start 2P"';
     ctx.fillStyle = colors.white;
@@ -599,23 +663,23 @@ function initSoccerGame() {
     ctx.beginPath(); ctx.moveTo(160, 172); ctx.lineTo(W - 160, 172); ctx.stroke();
     ctx.setLineDash([]);
 
+    // ── CHANGED: "30 sec", all English, simple words ──
     ctx.font = '7px "Press Start 2P"';
     ctx.fillStyle = colors.lightBlue;
-    ctx.fillText('60 SEK · MAX TORE · KEEPER ÜBERWINDEN', W / 2, 192);
+    ctx.fillText('30 sec · score goals · beat the keeper', W / 2, 192);
     ctx.fillStyle = colors.lightGray;
-    ctx.fillText('[ L ] WOCHE BESTENLISTE', W / 2, 212);
+    ctx.fillText('[ L ] weekly top scores', W / 2, 212);
 
-    // Controls box
     ctx.fillStyle = 'rgba(255,212,82,0.07)';
     ctx.fillRect(180, 228, W - 360, 100);
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 1;
     ctx.strokeRect(180, 228, W - 360, 100);
     [
-      ['← →', 'BEWEGEN'],
-      ['↑', 'POWER LADEN'],
-      ['SPACE', 'SCHUSS'],
-      ['↓', 'CHIP-SHOT'],
+      ['← →', 'MOVE'],
+      ['↑', 'HOLD FOR POWER'],
+      ['SPACE', 'SHOOT'],
+      ['↓', 'CHIP SHOT'],
     ].forEach(([key, desc], i) => {
       ctx.font = '6px "Press Start 2P"';
       ctx.fillStyle = i % 2 === 0 ? colors.yellow : colors.white;
@@ -623,20 +687,17 @@ function initSoccerGame() {
       ctx.fillText(`${key}  ${desc}`, W / 2, 248 + i * 18);
     });
 
-    // Streak hint
     ctx.font = '5px "Press Start 2P"';
     ctx.fillStyle = colors.red;
-    ctx.fillText('🔥 3 TORE HINTEREINANDER = x2 PUNKTE!', W / 2, 342);
+    ctx.fillText('🔥 3 goals in a row = x2 points!', W / 2, 342);
 
-    // Username
     if (username) {
       ctx.font = '6px "Press Start 2P"';
       ctx.fillStyle = colors.lightGray;
       ctx.textAlign = 'right';
-      ctx.fillText(`FAHRER: ${username}`, W - 10, H - 10);
+      ctx.fillText(`PLAYER: ${username}`, W - 10, H - 10);
     }
 
-    // Mini ball bounce
     const bt = Date.now() / 500;
     const bBounce = Math.abs(Math.sin(bt)) * 20;
     drawBall(W / 2, H - 55 - bBounce, 9);
@@ -659,12 +720,12 @@ function initSoccerGame() {
 
     ctx.font = '6px "Press Start 2P"';
     ctx.fillStyle = colors.lightBlue;
-    ctx.fillText(`KW ${getWeekNumber(new Date())} · Mo–So MEZ`, W / 2, 84);
+    ctx.fillText(`Week ${getWeekNumber(new Date())} · Mon–Sun`, W / 2, 84);
 
     if (leaderboard.length === 0) {
       ctx.font = '7px "Press Start 2P"';
       ctx.fillStyle = colors.lightGray;
-      ctx.fillText('Noch keine Einträge', W / 2, H / 2);
+      ctx.fillText('No entries yet', W / 2, H / 2);
     } else {
       leaderboard.forEach((entry, i) => {
         const y = 104 + i * 21;
@@ -688,15 +749,15 @@ function initSoccerGame() {
     ctx.font = '5px "Press Start 2P"';
     ctx.fillStyle = colors.lightGray;
     ctx.textAlign = 'center';
-    ctx.fillText('ENTER = NEUSTART', W / 2, H - 52);
+    ctx.fillText('ENTER = PLAY AGAIN', W / 2, H - 52);
   }
 
-  // ── Leaderboard Seite ─────────────────────────
+  // ── Leaderboard Page ──────────────────────────
   function showLeaderboardPage() {
     const w = window.open('', '_blank');
     const kw = getWeekNumber(new Date());
     const rows = leaderboard.length === 0
-      ? `<tr><td colspan="3" style="text-align:center;color:#474B57;padding:32px;">Noch keine Einträge diese Woche</td></tr>`
+      ? `<tr><td colspan="3" style="text-align:center;color:#474B57;padding:32px;">No entries this week yet</td></tr>`
       : leaderboard.map((e, i) => {
         const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
         const hl = e.username === username ? 'background:rgba(255,212,82,0.12);' : '';
@@ -707,9 +768,9 @@ function initSoccerGame() {
         </tr>`;
       }).join('');
     w.document.write(`<!DOCTYPE html>
-<html lang="de"><head>
+<html lang="en"><head>
   <meta charset="UTF-8">
-  <title>CarOnSale KICK – Top 10 KW${kw}</title>
+  <title>CarOnSale KICK – Top 10 Week ${kw}</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
@@ -735,13 +796,13 @@ function initSoccerGame() {
 </head><body>
   <div class="card">
     <h1>KICK TOP 10</h1>
-    <p class="sub">KW ${kw} · Montag 00:00 – Sonntag 23:59 MEZ</p>
+    <p class="sub">Week ${kw} · Mon 00:00 – Sun 23:59</p>
     <table>
-      <thead><tr><th>RANG</th><th>FAHRER</th><th>TORE</th></tr></thead>
+      <thead><tr><th>RANK</th><th>PLAYER</th><th>GOALS</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <p class="hint">Bestenliste wird jeden Montag um 00:00 MEZ zurückgesetzt</p>
-    <a class="back" onclick="window.close()">← zurück zum Spiel</a>
+    <p class="hint">Scores reset every Monday at 00:00</p>
+    <a class="back" onclick="window.close()">← back to game</a>
   </div>
 </body></html>`);
     w.document.close();
@@ -762,7 +823,7 @@ function initSoccerGame() {
                     text-align:center;max-width:360px;width:90%;
                     box-shadow:0 0 30px rgba(255,212,82,0.4);">
           <div style="color:#FFD452;font-size:12px;margin-bottom:10px;">CarOnSale KICK</div>
-          <div style="color:#fff;font-size:8px;margin-bottom:24px;line-height:2;">Wähle deinen Spielernamen</div>
+          <div style="color:#fff;font-size:8px;margin-bottom:24px;line-height:2;">Pick your name</div>
           <input id="usernameInput" maxlength="16" placeholder="NAME..."
             autocomplete="off" spellcheck="false"
             style="width:100%;background:#1a1d24;border:2px solid #FFD452;
@@ -774,7 +835,7 @@ function initSoccerGame() {
             style="background:#FFD452;color:#2F343E;border:none;
                    font-family:'Press Start 2P',monospace;font-size:10px;
                    padding:14px 24px;cursor:pointer;width:100%;box-shadow:4px 4px 0 #b8951a;">
-            ANPFIFF!
+            KICK OFF!
           </button>
         </div>
       `;
@@ -787,7 +848,7 @@ function initSoccerGame() {
       input.addEventListener('keyup', e => e.stopPropagation());
       function doConfirm() {
         const val = input.value.trim().toUpperCase();
-        if (!val || val.length < 2) { err.textContent = 'Mind. 2 Zeichen!'; input.focus(); return; }
+        if (!val || val.length < 2) { err.textContent = 'Min. 2 characters!'; input.focus(); return; }
         localStorage.setItem('cos_kick_username', val);
         document.body.removeChild(overlay);
         inputActive = false;
@@ -846,16 +907,13 @@ function initSoccerGame() {
     keys[e.code] = true;
     if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
 
-    // Fire shot on Space
     if (e.code === 'Space' && gameState === 'playing' && player && player.hasBall) {
       fireShot(player.x, player.power, false);
     }
-    // Chip on ArrowDown (while charging)
     if (e.code === 'ArrowDown' && gameState === 'playing' && player && player.hasBall && player.powerCharging) {
       fireShot(player.x, player.power, true);
     }
 
-    // Menu shortcuts
     if (!inputActive && (e.key === 'l' || e.key === 'L') && gameState === 'menu') {
       loadLeaderboard().then(data => {
         leaderboard = data; showLeaderboard = true;
@@ -903,11 +961,11 @@ function initSoccerGame() {
       ctx.font = '10px "Press Start 2P"';
       ctx.textAlign = 'center';
       ctx.fillStyle = colors.yellow;
-      ctx.fillText('ABPFIFF!', W / 2, H / 2 - 30);
+      ctx.fillText('FINAL WHISTLE!', W / 2, H / 2 - 30);
       ctx.font = '7px "Press Start 2P"';
       ctx.fillStyle = colors.lightGray;
-      ctx.fillText(`TORE: ${finalGoals} ⚽`, W / 2, H / 2);
-      ctx.fillText('Speichere Ergebnis...', W / 2, H / 2 + 28);
+      ctx.fillText(`GOALS: ${finalGoals} ⚽`, W / 2, H / 2);
+      ctx.fillText('Saving score...', W / 2, H / 2 + 28);
     }
   }
 
@@ -928,7 +986,7 @@ function initSoccerGame() {
       );
       if (myRank >= 0 && myRank < 3) spawnConfetti();
     } catch (e) {
-      console.error('Fehler:', e);
+      console.error('Error:', e);
       leaderboard = [{ username, goals_scored: finalGoals }];
     }
     showLeaderboard = true;
