@@ -715,12 +715,16 @@ function initSoccerGame() {
     ctx.fillStyle = colors.yellow;
     ctx.textAlign = 'center';
     ctx.shadowColor = colors.yellow; ctx.shadowBlur = 8;
-    ctx.fillText('WEEK TOP 10', W / 2, 68);
+    ctx.fillText('TOP 10', W / 2, 68);
     ctx.shadowBlur = 0;
 
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
     ctx.font = '6px "Press Start 2P"';
     ctx.fillStyle = colors.lightBlue;
-    ctx.fillText(`Week ${getWeekNumber(new Date())} · Mon–Sun`, W / 2, 84);
+    ctx.fillText(`${dd}.${mm}.${yyyy}`, W / 2, 84);
 
     if (leaderboard.length === 0) {
       ctx.font = '7px "Press Start 2P"';
