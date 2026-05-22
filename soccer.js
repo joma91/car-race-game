@@ -1,6 +1,6 @@
 // ── Supabase Config ───────────────────────────
 const SUPABASE_URL = 'https://rwuogkjbpnhahdvudxax.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_O27RaZhwl75cqBRIuknJVQ_nwydUJC8';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3dW9na2picG5oYWhkdnVkeGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNzI3NzYsImV4cCI6MjA5MzY0ODc3Nn0.ZoNkmUpMivwl3GlHl63qhgRPrQ4nbnsniUCftakRghY';
 
 async function supabaseFetch(path, options = {}) {
   const res = await fetch(SUPABASE_URL + path, {
