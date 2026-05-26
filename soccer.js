@@ -1,6 +1,6 @@
 // ── Supabase Config ───────────────────────────
-const SUPABASE_URL = 'https://rwuogkjbpnhahdvudxax.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3dW9na2picG5oYWhkdnVkeGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNzI3NzYsImV4cCI6MjA5MzY0ODc3Nn0.ZoNkmUpMivwl3GlHl63qhgRPrQ4nbnsniUCftakRghY';
+const SUPABASE_URL = 'DEINE_SUPABASE_URL';
+const SUPABASE_KEY = 'DEIN_SUPABASE_ANON_KEY';
 
 async function supabaseFetch(path, options = {}) {
   const res = await fetch(SUPABASE_URL + path, {
@@ -76,7 +76,13 @@ function initSoccerGame() {
   let goals = 0, timeLeft = 30, timerInterval = null;
   let countdown = 0, finalGoals = 0;
   let leaderboard = [], showLeaderboard = false;
-  let username = localStorage.getItem('cos_kick_username') || null;
+  // UUID/name from URL parameter ?pid=... takes priority
+  const _urlParams = new URLSearchParams(window.location.search);
+  const _pidFromUrl = _urlParams.get('pid');
+  if (_pidFromUrl) {
+    localStorage.setItem('cos_kick_username', _pidFromUrl);
+  }
+  let username = _pidFromUrl || localStorage.getItem('cos_kick_username') || null;
   let inputActive = false;
   let particles = [], confetti = [];
   let streakCount = 0, streakBonus = false, streakTimer = 0;
