@@ -43,9 +43,8 @@ async function saveScore(username, goals) {
 }
 
 async function loadLeaderboard() {
-  const weekStart = getWeekStart();
   const data = await supabaseFetch(
-    `/rest/v1/kick_scores?select=username,goals_scored&created_at=gte.${weekStart}&order=goals_scored.desc&limit=10`
+    `/rest/v1/kick_leaderboard?select=username,goals_scored`
   );
   return Array.isArray(data) ? data : [];
 }
