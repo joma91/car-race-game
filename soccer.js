@@ -760,9 +760,13 @@ function initSoccerGame() {
         ctx.font = '6px "Press Start 2P"';
         ctx.textAlign = 'left';
         if (isMe) {
+          // Show rank + "You" in name column
+          const rankLabel = ordinals[i] || `${i + 1}th`;
+          ctx.fillStyle = i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : colors.lightGray;
+          ctx.fillText(rankLabel, 76, y + 4);
           ctx.fillStyle = colors.yellow;
           ctx.shadowColor = colors.yellow; ctx.shadowBlur = 6;
-          ctx.fillText('You', 76, y + 4);
+          ctx.fillText('You', 122, y + 4);
           ctx.shadowBlur = 0;
         } else {
           const rankLabel = ordinals[i] || `${i + 1}th`;
