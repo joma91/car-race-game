@@ -738,6 +738,18 @@ function initSoccerGame() {
       ctx.fillText('No entries yet', W / 2, H / 2);
     } else {
       const ordinals = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'];
+      // Assign stable anonymous labels to other players for this session
+      const anonLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      let anonIdx = 0;
+      const anonMap = {};
+      leaderboard.forEach(entry => {
+        if (entry.username !== username) {
+          if (!anonMap[entry.username]) {
+            anonMap[entry.username] = 'Player ' + anonLetters[anonIdx++ % anonLetters.length];
+          }
+        }
+      });
+
       leaderboard.forEach((entry, i) => {
         const y = 104 + i * 21;
         const isMe = entry.username === username;
@@ -756,8 +768,8 @@ function initSoccerGame() {
           const rankLabel = ordinals[i] || `${i + 1}th`;
           ctx.fillStyle = i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : colors.lightGray;
           ctx.fillText(rankLabel, 76, y + 4);
-          ctx.fillStyle = colors.white;
-          ctx.fillText(entry.username.substring(0, 12), 122, y + 4);
+          ctx.fillStyle = colors.lightGray;
+          ctx.fillText(anonMap[entry.username], 122, y + 4);
         }
         ctx.textAlign = 'right';
         ctx.fillStyle = isMe ? colors.yellow : colors.lightBlue;
