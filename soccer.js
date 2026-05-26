@@ -1,6 +1,6 @@
 // ── Supabase Config ───────────────────────────
-const SUPABASE_URL = 'DEINE_SUPABASE_URL';
-const SUPABASE_KEY = 'DEIN_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://rwuogkjbpnhahdvudxax.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3dW9na2picG5oYWhkdnVkeGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNzI3NzYsImV4cCI6MjA5MzY0ODc3Nn0.ZoNkmUpMivwl3GlHl63qhgRPrQ4nbnsniUCftakRghY';
 
 async function supabaseFetch(path, options = {}) {
   const res = await fetch(SUPABASE_URL + path, {
@@ -737,19 +737,28 @@ function initSoccerGame() {
       ctx.fillStyle = colors.lightGray;
       ctx.fillText('No entries yet', W / 2, H / 2);
     } else {
+      const ordinals = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'];
       leaderboard.forEach((entry, i) => {
         const y = 104 + i * 21;
         const isMe = entry.username === username;
         if (isMe) {
-          ctx.fillStyle = 'rgba(255,212,82,0.15)';
+          ctx.fillStyle = 'rgba(255,212,82,0.22)';
           ctx.fillRect(68, y - 8, W - 136, 20);
         }
         ctx.font = '6px "Press Start 2P"';
         ctx.textAlign = 'left';
-        ctx.fillStyle = i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : colors.lightGray;
-        ctx.fillText(String(i + 1).padStart(2, '0'), 76, y + 4);
-        ctx.fillStyle = isMe ? colors.yellow : colors.white;
-        ctx.fillText(entry.username.substring(0, 14), 110, y + 4);
+        if (isMe) {
+          ctx.fillStyle = colors.yellow;
+          ctx.shadowColor = colors.yellow; ctx.shadowBlur = 6;
+          ctx.fillText('You', 76, y + 4);
+          ctx.shadowBlur = 0;
+        } else {
+          const rankLabel = ordinals[i] || `${i + 1}th`;
+          ctx.fillStyle = i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : colors.lightGray;
+          ctx.fillText(rankLabel, 76, y + 4);
+          ctx.fillStyle = colors.white;
+          ctx.fillText(entry.username.substring(0, 12), 122, y + 4);
+        }
         ctx.textAlign = 'right';
         ctx.fillStyle = isMe ? colors.yellow : colors.lightBlue;
         ctx.fillText(`${entry.goals_scored} ⚽`, W - 76, y + 4);
