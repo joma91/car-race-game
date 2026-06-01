@@ -665,36 +665,33 @@ function initSoccerGame() {
 
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 1; ctx.setLineDash([6, 6]);
-    ctx.beginPath(); ctx.moveTo(160, 172); ctx.lineTo(W - 160, 172); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(120, 172); ctx.lineTo(W - 120, 172); ctx.stroke();
     ctx.setLineDash([]);
 
-    // ── CHANGED: "30 sec", all English, simple words ──
-    ctx.font = '7px "Press Start 2P"';
+    ctx.font = '8px "Press Start 2P"';
     ctx.fillStyle = colors.lightBlue;
     ctx.fillText('30 sec · score goals · beat the keeper', W / 2, 192);
-    ctx.fillStyle = colors.lightGray;
-    ctx.fillText('[ L ] weekly top scores', W / 2, 212);
 
     ctx.fillStyle = 'rgba(255,212,82,0.07)';
-    ctx.fillRect(180, 228, W - 360, 100);
+    ctx.fillRect(140, 210, W - 280, 108);
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 1;
-    ctx.strokeRect(180, 228, W - 360, 100);
+    ctx.strokeRect(140, 210, W - 280, 108);
     [
       ['← →', 'MOVE'],
       ['↑', 'HOLD FOR POWER'],
       ['SPACE', 'SHOOT'],
       ['↓', 'CHIP SHOT'],
     ].forEach(([key, desc], i) => {
-      ctx.font = '6px "Press Start 2P"';
+      ctx.font = '7px "Press Start 2P"';
       ctx.fillStyle = i % 2 === 0 ? colors.yellow : colors.white;
       ctx.textAlign = 'center';
-      ctx.fillText(`${key}  ${desc}`, W / 2, 248 + i * 18);
+      ctx.fillText(`${key}   ${desc}`, W / 2, 232 + i * 22);
     });
 
-    ctx.font = '5px "Press Start 2P"';
+    ctx.font = '7px "Press Start 2P"';
     ctx.fillStyle = colors.red;
-    ctx.fillText('🔥 3 goals in a row = x2 points!', W / 2, 342);
+    ctx.fillText('🔥  3 goals in a row  =  x2 points!', W / 2, 338);
 
     if (username) {
       ctx.font = '6px "Press Start 2P"';
