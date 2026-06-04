@@ -306,6 +306,45 @@ function initSoccerGame() {
     ctx.restore();
   }
 
+  function drawSoccerBall(x, y, r) {
+    ctx.save();
+    // White base
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Black pentagon center
+    ctx.fillStyle = '#111';
+    ctx.beginPath();
+    const pts = 5, ir = r * 0.38;
+    for (let i = 0; i < pts; i++) {
+      const a = (i / pts) * Math.PI * 2 - Math.PI / 2;
+      i === 0 ? ctx.moveTo(x + Math.cos(a)*ir, y + Math.sin(a)*ir)
+              : ctx.lineTo(x + Math.cos(a)*ir, y + Math.sin(a)*ir);
+    }
+    ctx.closePath();
+    ctx.fill();
+    // 5 surrounding patches
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+      const px = x + Math.cos(a) * r * 0.62;
+      const py = y + Math.sin(a) * r * 0.62;
+      ctx.beginPath();
+      for (let j = 0; j < 5; j++) {
+        const pa = a + (j / 5) * Math.PI * 2;
+        const pr = r * 0.26;
+        j === 0 ? ctx.moveTo(px + Math.cos(pa)*pr, py + Math.sin(pa)*pr)
+                : ctx.lineTo(px + Math.cos(pa)*pr, py + Math.sin(pa)*pr);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   function onGoal() {
     const pts = streakBonus ? 2 : 1;
     goals += pts;
@@ -700,9 +739,12 @@ function initSoccerGame() {
       ctx.fillText(`PLAYER: ${username}`, W - 10, H - 10);
     }
 
+    // Bouncing ball sits on top of the yellow canvas border (bottom edge)
     const bt = Date.now() / 500;
-    const bBounce = Math.abs(Math.sin(bt)) * 20;
-    drawBall(W / 2, H - 55 - bBounce, 9);
+    const bBounce = Math.abs(Math.sin(bt)) * 28;
+    const ballR = 10;
+    const floorY = H - ballR - 2; // just above bottom border
+    drawSoccerBall(W / 2, floorY - bBounce, ballR);
   }
 
   // ── Leaderboard Overlay ───────────────────────
