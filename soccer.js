@@ -56,7 +56,6 @@ function initSoccerGame() {
   const startButton = document.getElementById('startButton');
   const buttonRow = document.getElementById('buttonRow');
   const btnRestart = document.getElementById('btnRestart');
-  const btnLeaderboard = document.getElementById('btnLeaderboard');
 
   const W = canvas.width;
   const H = canvas.height;
@@ -1123,7 +1122,6 @@ function initSoccerGame() {
 
   startButton.onclick = startGame;
   btnRestart.onclick = startGame;
-  btnLeaderboard.onclick = showLeaderboardPage;
 
   setupTouchControls();
   waitForFont(() => {
