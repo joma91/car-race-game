@@ -712,7 +712,7 @@ function initSoccerGame() {
 
     // Controls box
     const controls = [
-      ['← →', 'MOVE'],
+      ['◀ ▶', 'MOVE'],
       ['↑ hold', 'POWER'],
       ['SPACE', 'SHOOT'],
       ['↓ hold', 'CHIP'],
