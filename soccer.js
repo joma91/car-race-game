@@ -731,12 +731,7 @@ function initSoccerGame() {
     ctx.fillStyle = colors.red;
     ctx.fillText('🔥  3 goals in a row  =  x2 points!', W / 2, 338);
 
-    if (username) {
-      ctx.font = '6px "Press Start 2P"';
-      ctx.fillStyle = colors.lightGray;
-      ctx.textAlign = 'right';
-      ctx.fillText(`PLAYER: ${username}`, W - 10, H - 10);
-    }
+
 
     // Bouncing ball sits on top of the yellow canvas border (bottom edge)
     const bt = Date.now() / 500;
