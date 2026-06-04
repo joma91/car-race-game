@@ -710,22 +710,50 @@ function initSoccerGame() {
     ctx.fillStyle = colors.lightBlue;
     ctx.fillText('30 sec · score goals · beat the keeper', W / 2, 192);
 
+    // Controls box
+    const controls = [
+      ['← →', 'MOVE'],
+      ['↑ hold', 'POWER'],
+      ['SPACE', 'SHOOT'],
+      ['↓ hold', 'CHIP'],
+    ];
+    const boxX = 140, boxY = 210, boxW = W - 280, boxH = 108;
     ctx.fillStyle = 'rgba(255,212,82,0.07)';
-    ctx.fillRect(140, 210, W - 280, 108);
+    ctx.fillRect(boxX, boxY, boxW, boxH);
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 1;
-    ctx.strokeRect(140, 210, W - 280, 108);
-    [
-      ['← →', 'MOVE'],
-      ['↑', 'HOLD FOR POWER'],
-      ['SPACE', 'SHOOT'],
-      ['↓', 'CHIP SHOT'],
-    ].forEach(([key, desc], i) => {
+    ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+    const rowH2 = boxH / controls.length;
+    controls.forEach(([key, desc], i) => {
+      const rowY = boxY + i * rowH2 + rowH2 / 2;
+
+      // Key badge background
+      const keyW = 68, keyH = 16, keyX = boxX + 52, keyY2 = rowY - keyH / 2;
+      ctx.fillStyle = 'rgba(255,212,82,0.18)';
+      ctx.fillRect(keyX, keyY2, keyW, keyH);
+      ctx.strokeStyle = colors.yellow;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(keyX, keyY2, keyW, keyH);
+
+      // Key label
       ctx.font = '7px "Press Start 2P"';
-      ctx.fillStyle = i % 2 === 0 ? colors.yellow : colors.white;
+      ctx.fillStyle = colors.yellow;
       ctx.textAlign = 'center';
-      ctx.fillText(`${key}   ${desc}`, W / 2, 232 + i * 22);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(key, keyX + keyW / 2, rowY);
+
+      // Arrow separator
+      ctx.fillStyle = colors.lightGray;
+      ctx.font = '7px "Press Start 2P"';
+      ctx.fillText('→', keyX + keyW + 18, rowY);
+
+      // Action label
+      ctx.fillStyle = colors.white;
+      ctx.textAlign = 'left';
+      ctx.fillText(desc, keyX + keyW + 34, rowY);
     });
+    ctx.textBaseline = 'middle';
 
     ctx.font = '7px "Press Start 2P"';
     ctx.fillStyle = colors.red;
