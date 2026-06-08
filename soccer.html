@@ -28,7 +28,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     canvas {
@@ -36,10 +36,78 @@
       width: 700px;
       height: 400px;
       max-width: 100vw;
-      max-height: calc(100dvh - 140px);
+      max-height: calc(100dvh - 200px);
       image-rendering: pixelated;
       border: 2px solid #FFD452;
       box-shadow: 0 0 40px rgba(255, 212, 82, 0.25), 0 0 80px rgba(255, 212, 82, 0.08);
+    }
+
+    /* ── T&C Banner ───────────────────────── */
+    #tncBanner {
+      width: 700px;
+      max-width: 100vw;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,212,82,0.3);
+      border-top: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    #tncScroll {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      max-height: 80px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #FFD452 #2F343E;
+      padding: 8px 0;
+    }
+    #tncScroll::-webkit-scrollbar { width: 4px; }
+    #tncScroll::-webkit-scrollbar-track { background: #2F343E; }
+    #tncScroll::-webkit-scrollbar-thumb { background: #FFD452; }
+
+    .tnc-col {
+      padding: 0 12px;
+      font-family: monospace;
+      font-size: 9px;
+      line-height: 1.7;
+      color: rgba(186,197,229,0.75);
+    }
+    .tnc-col strong {
+      color: #FFD452;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      display: block;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .tnc-divider {
+      background: rgba(255,212,82,0.2);
+      width: 1px;
+      align-self: stretch;
+    }
+
+    #tncFooter {
+      border-top: 1px solid rgba(255,212,82,0.2);
+      padding: 5px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.3);
+    }
+
+    #tncConsentNote {
+      font-family: monospace;
+      font-size: 8.5px;
+      color: rgba(186,197,229,0.65);
+      text-align: center;
+      line-height: 1.5;
+    }
+    #tncConsentNote strong {
+      color: rgba(255,212,82,0.85);
+      font-style: normal;
     }
 
     /* ── Buttons ─────────────────────────── */
@@ -87,7 +155,7 @@
       width: 100%;
       max-width: 700px;
       padding: 0 8px;
-      margin-top: 4px;
+      margin-top: 2px;
     }
 
     #touchLeft, #touchRight {
@@ -128,17 +196,40 @@
 
     @media (pointer: coarse) {
       #touchControls { display: flex; }
-      canvas { max-height: calc(100dvh - 200px); }
+      canvas { max-height: calc(100dvh - 260px); }
     }
 
     @media (max-width: 720px) {
       canvas { width: 100vw; height: calc(100vw * 0.571); }
+      #tncBanner { width: 100vw; }
     }
   </style>
 </head>
 <body>
   <div id="gameWrapper">
     <canvas id="gameCanvas" width="700" height="400"></canvas>
+
+    <!-- T&C Banner — visible only before first game start -->
+    <div id="tncBanner">
+      <div id="tncScroll">
+        <!-- DE -->
+        <div class="tnc-col">
+          <strong>TEILNAHMEBEDINGUNGEN</strong>
+          Die Teilnahme am Spiel über die CarOnSale Desktop-Version qualifiziert zur Gewinnausschüttung. Voraussetzung ist, dass der Teilnehmer ein voll registrierter Käufer ist und das Spiel über den dafür vorgesehenen Fußball-Button aufruft. Jeden Tag wird ein CarOnSale-Gutschein im Wert von 100 € an den Spieler mit dem höchsten Score des jeweiligen Kalendertages ausgegeben. Erzielen mehrere Spieler denselben höchsten Score, wird der Gutschein dem Spieler zugeteilt, der diesen Score zeitlich als Erster erreicht hat. Der Gutschein enthält keinen Barwert, ist nicht übertragbar und wird bei einer abgeschlossenen Fahrzeugtransaktion auf die anfallenden CarOnSale-Gebühren erstattet. Der Gültigkeitszeitraum des Gutscheins beträgt mindestens 2 Wochen ab Vergabe und kann nur vom eigenen, gewinnenden CarOnSale-Account eingelöst werden.
+        </div>
+        <div class="tnc-divider"></div>
+        <!-- EN -->
+        <div class="tnc-col">
+          <strong>TERMS &amp; CONDITIONS</strong>
+          Participation in the game via the desktop version of CarOnSale qualifies for the prize distribution. To be eligible, the participant must be a fully registered buyer and access the game via the designated football button. Each day, a CarOnSale voucher worth €100 will be awarded to the player with the highest score of that respective calendar day. If multiple players achieve the same highest score, the voucher will be awarded to the player who reached this score first. The voucher has no cash value, is non-transferable, and will be credited towards the applicable CarOnSale fees upon completion of a vehicle transaction. The validity period of the voucher is at least 2 weeks from the date of issue and it can only be redeemed from the winning user's own CarOnSale account.
+        </div>
+      </div>
+      <div id="tncFooter">
+        <p id="tncConsentNote">
+          Mit Klick auf <strong>KICK OFF</strong> erklärst du dich mit den Teilnahmebedingungen einverstanden.&nbsp;&nbsp;/&nbsp;&nbsp;By clicking <strong>KICK OFF</strong> you agree to the terms &amp; conditions above.
+        </p>
+      </div>
+    </div>
 
     <button id="startButton">KICK OFF ▶</button>
 
@@ -160,6 +251,13 @@
       </div>
     </div>
   </div>
+
+  <script>
+    // Hide T&C banner permanently once the player clicks KICK OFF (consent implied by click)
+    document.getElementById('startButton').addEventListener('click', () => {
+      document.getElementById('tncBanner').style.display = 'none';
+    }, { once: true });
+  </script>
 
   <script src="soccer.js"></script>
 </body>
