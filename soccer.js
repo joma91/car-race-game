@@ -665,28 +665,28 @@ function initSoccerGame() {
   // ── Leaderboard Overlay ───────────────────────
   function drawLeaderboardOverlay() {
     ctx.fillStyle = 'rgba(0,0,0,0.92)';
-    ctx.fillRect(60, 45, W - 120, H - 90);
+    ctx.fillRect(40, 36, W - 80, H - 72);
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 2;
-    ctx.strokeRect(60, 45, W - 120, H - 90);
+    ctx.strokeRect(40, 36, W - 80, H - 72);
 
-    ctx.font = '9px "Press Start 2P"';
+    ctx.font = '12px "Press Start 2P"';
     ctx.fillStyle = colors.yellow;
     ctx.textAlign = 'center';
     ctx.shadowColor = colors.yellow; ctx.shadowBlur = 8;
-    ctx.fillText('TOP 10', W / 2, 68);
+    ctx.fillText('TOP 10', W / 2, 60);
     ctx.shadowBlur = 0;
 
     const now = new Date();
     const dd = String(now.getDate()).padStart(2,'0');
     const mm = String(now.getMonth()+1).padStart(2,'0');
     const yyyy = now.getFullYear();
-    ctx.font = '6px "Press Start 2P"';
+    ctx.font = '9px "Press Start 2P"';
     ctx.fillStyle = colors.lightBlue;
-    ctx.fillText(`${dd}.${mm}.${yyyy}`, W / 2, 84);
+    ctx.fillText(`${dd}.${mm}.${yyyy}`, W / 2, 82);
 
     if (leaderboard.length === 0) {
-      ctx.font = '7px "Press Start 2P"';
+      ctx.font = '12px "Press Start 2P"';
       ctx.fillStyle = colors.lightGray;
       ctx.fillText('No entries yet', W / 2, H / 2);
     } else {
@@ -700,35 +700,35 @@ function initSoccerGame() {
         }
       });
       leaderboard.forEach((entry, i) => {
-        const y = 104 + i * 21;
+        const y = 106 + i * 28;
         const isMe = entry.username === username;
         if (isMe) {
           ctx.fillStyle = 'rgba(255,212,82,0.22)';
-          ctx.fillRect(68, y - 8, W - 136, 20);
+          ctx.fillRect(48, y - 10, W - 96, 26);
         }
-        ctx.font = '6px "Press Start 2P"';
+        ctx.font = '12px "Press Start 2P"';
         ctx.textAlign = 'left';
         const rankLabel = ordinals[i] || `${i+1}th`;
         ctx.fillStyle = i===0?'#FFD700':i===1?'#C0C0C0':i===2?'#CD7F32':colors.lightGray;
-        ctx.fillText(rankLabel, 76, y + 4);
+        ctx.fillText(rankLabel, 58, y + 4);
         if (isMe) {
           ctx.fillStyle = colors.yellow;
           ctx.shadowColor = colors.yellow; ctx.shadowBlur = 6;
-          ctx.fillText('You', 122, y + 4);
+          ctx.fillText('You', 120, y + 4);
           ctx.shadowBlur = 0;
         } else {
           ctx.fillStyle = colors.lightGray;
-          ctx.fillText(anonMap[entry.username], 122, y + 4);
+          ctx.fillText(anonMap[entry.username], 120, y + 4);
         }
         ctx.textAlign = 'right';
         ctx.fillStyle = isMe ? colors.yellow : colors.lightBlue;
-        ctx.fillText(`${entry.goals_scored} ⚽`, W - 76, y + 4);
+        ctx.fillText(`${entry.goals_scored} ⚽`, W - 58, y + 4);
       });
     }
-    ctx.font = '5px "Press Start 2P"';
+    ctx.font = '8px "Press Start 2P"';
     ctx.fillStyle = colors.lightGray;
     ctx.textAlign = 'center';
-    ctx.fillText('ENTER = PLAY AGAIN', W / 2, H - 52);
+    ctx.fillText('ENTER = PLAY AGAIN', W / 2, H - 46);
   }
 
   // ── Leaderboard Page ──────────────────────────
