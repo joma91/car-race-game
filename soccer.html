@@ -18,7 +18,9 @@
       justify-content: center;
       min-height: 100dvh;
       font-family: 'Press Start 2P', monospace;
-      overflow: hidden;
+      /* overflow:hidden removed — it was clipping the button below the canvas */
+      overflow-x: hidden;
+      overflow-y: auto;
       user-select: none;
       -webkit-user-select: none;
     }
@@ -31,11 +33,12 @@
       gap: 10px;
     }
 
-    /* FIX 1: Canvas significantly larger – was 700×400 */
+    /* FIX 1: Canvas displayed larger via CSS scaling; internal resolution stays 700×400
+       so all game coordinate math remains correct */
     canvas {
       display: block;
-      width: min(900px, 95vw);
-      height: calc(min(900px, 95vw) * 0.5556);
+      width: min(840px, 95vw);
+      height: calc(min(840px, 95vw) * (400/700));
       image-rendering: pixelated;
       border: 2px solid #FFD452;
       box-shadow: 0 0 40px rgba(255, 212, 82, 0.25), 0 0 80px rgba(255, 212, 82, 0.08);
@@ -43,7 +46,7 @@
 
     /* ── T&C Banner ───────────────────────── */
     #tncBanner {
-      width: min(900px, 95vw);
+      width: min(840px, 95vw);
       background: rgba(0,0,0,0.6);
       border: 1px solid rgba(255,212,82,0.3);
       border-top: none;
@@ -171,7 +174,7 @@
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      max-width: min(900px, 95vw);
+      max-width: min(840px, 95vw);
       padding: 0 8px;
       margin-top: 2px;
     }
@@ -217,15 +220,15 @@
       canvas { max-height: calc(100dvh - 260px); }
     }
 
-    @media (max-width: 920px) {
-      canvas { width: 95vw; height: calc(95vw * 0.5556); }
+    @media (max-width: 860px) {
+      canvas { width: 95vw; height: calc(95vw * (400/700)); }
       #tncBanner { width: 95vw; }
     }
   </style>
 </head>
 <body>
   <div id="gameWrapper" style="position:relative;">
-    <canvas id="gameCanvas" width="900" height="500"></canvas>
+    <canvas id="gameCanvas" width="700" height="400"></canvas>
 
     <!-- T&C Banner — visible only before first game start -->
     <div id="tncBanner" style="position:relative;">
