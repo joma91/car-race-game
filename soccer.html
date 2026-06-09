@@ -40,12 +40,16 @@
     canvas {
       display: block;
       width: min(840px, 95vw);
-      max-height: calc(100dvh - 180px);
       aspect-ratio: 7 / 4.6;
       height: auto;
       image-rendering: pixelated;
       border: 2px solid #FFD452;
       box-shadow: 0 0 40px rgba(255, 212, 82, 0.25), 0 0 80px rgba(255, 212, 82, 0.08);
+    }
+
+    /* On the start screen the T&C banner + button need space below the canvas */
+    body.state-menu canvas {
+      max-height: calc(100dvh - 230px);
     }
 
     /* ── T&C Banner ───────────────────────── */
