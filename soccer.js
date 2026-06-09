@@ -592,7 +592,7 @@ function initSoccerGame() {
     ctx.fillStyle = colors.white;
     ctx.textAlign = 'center';
     ctx.shadowColor = colors.lightBlue; ctx.shadowBlur = 6;
-    ctx.fillText('K I C K', W / 2, 160);
+    ctx.fillText('Daily Penalty', W / 2, 160);
     ctx.shadowBlur = 0;
 
     ctx.strokeStyle = colors.yellow;
