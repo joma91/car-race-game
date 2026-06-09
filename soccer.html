@@ -31,12 +31,11 @@
       gap: 10px;
     }
 
+    /* FIX 1: Canvas significantly larger – was 700×400 */
     canvas {
       display: block;
-      width: 700px;
-      height: 400px;
-      max-width: 100vw;
-      max-height: calc(100dvh - 200px);
+      width: min(900px, 95vw);
+      height: calc(min(900px, 95vw) * 0.5556);
       image-rendering: pixelated;
       border: 2px solid #FFD452;
       box-shadow: 0 0 40px rgba(255, 212, 82, 0.25), 0 0 80px rgba(255, 212, 82, 0.08);
@@ -44,8 +43,7 @@
 
     /* ── T&C Banner ───────────────────────── */
     #tncBanner {
-      width: 700px;
-      max-width: 100vw;
+      width: min(900px, 95vw);
       background: rgba(0,0,0,0.6);
       border: 1px solid rgba(255,212,82,0.3);
       border-top: none;
@@ -54,33 +52,51 @@
       gap: 0;
     }
 
+    /* FIX 2: T&C — unified font, visible scroll indicator */
     #tncScroll {
       display: grid;
       grid-template-columns: 1fr 1px 1fr;
-      max-height: 80px;
+      max-height: 90px;
       overflow-y: auto;
       scrollbar-width: thin;
       scrollbar-color: #FFD452 #2F343E;
       padding: 8px 0;
+      /* make scrollbar always visible so user knows it's scrollable */
+      overflow-y: scroll;
     }
-    #tncScroll::-webkit-scrollbar { width: 4px; }
+    #tncScroll::-webkit-scrollbar { width: 6px; }
     #tncScroll::-webkit-scrollbar-track { background: #2F343E; }
-    #tncScroll::-webkit-scrollbar-thumb { background: #FFD452; }
+    #tncScroll::-webkit-scrollbar-thumb { background: #FFD452; border-radius: 3px; }
 
     .tnc-col {
-      padding: 0 12px;
-      font-family: monospace;
-      font-size: 9px;
-      line-height: 1.7;
-      color: rgba(186,197,229,0.75);
+      padding: 0 14px;
+      /* FIX 2: single font family, consistent size */
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      line-height: 2;
+      color: rgba(186,197,229,0.80);
     }
     .tnc-col strong {
       color: #FFD452;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6px;
+      font-size: 7px;
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       letter-spacing: 0.5px;
+    }
+
+    /* Scroll hint arrow at bottom-right of banner */
+    #tncScrollHint {
+      position: absolute;
+      bottom: 48px; /* above footer */
+      right: 10px;
+      color: rgba(255,212,82,0.7);
+      font-size: 10px;
+      animation: bounce 1.2s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(4px); }
     }
 
     .tnc-divider {
@@ -99,14 +115,15 @@
     }
 
     #tncConsentNote {
-      font-family: monospace;
-      font-size: 8.5px;
-      color: rgba(186,197,229,0.65);
+      /* FIX 2: unified font */
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: rgba(186,197,229,0.75);
       text-align: center;
-      line-height: 1.5;
+      line-height: 2;
     }
     #tncConsentNote strong {
-      color: rgba(255,212,82,0.85);
+      color: rgba(255,212,82,0.95);
       font-style: normal;
     }
 
@@ -116,8 +133,8 @@
       color: #2F343E;
       border: none;
       font-family: 'Press Start 2P', monospace;
-      font-size: 11px;
-      padding: 14px 36px;
+      font-size: 13px;
+      padding: 16px 40px;
       cursor: pointer;
       box-shadow: 4px 4px 0 #b8951a;
       transition: transform 0.1s, box-shadow 0.1s;
@@ -132,13 +149,14 @@
       flex-wrap: wrap;
       justify-content: center;
     }
+    /* FIX 6: Play Again button – bigger font + icon */
     #buttonRow button {
       background: transparent;
       color: #FFD452;
       border: 2px solid #FFD452;
       font-family: 'Press Start 2P', monospace;
-      font-size: 8px;
-      padding: 10px 20px;
+      font-size: 12px;    /* was 8px */
+      padding: 13px 26px;
       cursor: pointer;
       box-shadow: 3px 3px 0 #b8951a;
       transition: transform 0.1s, box-shadow 0.1s;
@@ -153,7 +171,7 @@
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      max-width: 700px;
+      max-width: min(900px, 95vw);
       padding: 0 8px;
       margin-top: 2px;
     }
@@ -199,18 +217,18 @@
       canvas { max-height: calc(100dvh - 260px); }
     }
 
-    @media (max-width: 720px) {
-      canvas { width: 100vw; height: calc(100vw * 0.571); }
-      #tncBanner { width: 100vw; }
+    @media (max-width: 920px) {
+      canvas { width: 95vw; height: calc(95vw * 0.5556); }
+      #tncBanner { width: 95vw; }
     }
   </style>
 </head>
 <body>
-  <div id="gameWrapper">
-    <canvas id="gameCanvas" width="700" height="400"></canvas>
+  <div id="gameWrapper" style="position:relative;">
+    <canvas id="gameCanvas" width="900" height="500"></canvas>
 
     <!-- T&C Banner — visible only before first game start -->
-    <div id="tncBanner">
+    <div id="tncBanner" style="position:relative;">
       <div id="tncScroll">
         <!-- DE -->
         <div class="tnc-col">
@@ -221,12 +239,14 @@
         <!-- EN -->
         <div class="tnc-col">
           <strong>TERMS &amp; CONDITIONS</strong>
-          Participation in the game via the desktop version of CarOnSale qualifies for the prize distribution. To be eligible, the participant must be a fully registered buyer and access the game via the designated football button. This is the only way to ensure a clear assignment of the player to their existing account.. Each day, a CarOnSale voucher worth €100 will be awarded to the player with the highest score of that respective calendar day. If multiple players achieve the same highest score, the voucher will be awarded to the player who reached this score first. The voucher has no cash value, is non-transferable, and will be credited towards the applicable CarOnSale fees upon completion of a vehicle transaction. The validity period of the voucher is at least 2 weeks from the date of issue and it can only be redeemed from the winning user's own CarOnSale account.
+          Participation in the game via the desktop version of CarOnSale qualifies for the prize distribution. To be eligible, the participant must be a fully registered buyer and access the game via the designated football button. This is the only way to ensure a clear assignment of the player to their existing account. Each day, a CarOnSale voucher worth €100 will be awarded to the player with the highest score of that respective calendar day. If multiple players achieve the same highest score, the voucher will be awarded to the player who reached this score first. The voucher has no cash value, is non-transferable, and will be credited towards the applicable CarOnSale fees upon completion of a vehicle transaction. The validity period of the voucher is at least 2 weeks from the date of issue and it can only be redeemed from the winning user's own CarOnSale account.
         </div>
       </div>
+      <!-- FIX 2: scroll hint -->
+      <div id="tncScrollHint">▼</div>
       <div id="tncFooter">
         <p id="tncConsentNote">
-          Mit Klick auf <strong>KICK OFF</strong> erklärst du dich mit den Teilnahmebedingungen einverstanden.&nbsp;&nbsp;/&nbsp;&nbsp;By clicking <strong>KICK OFF</strong> you agree to the terms &amp; conditions above.
+          Mit Klick auf <strong>KICK OFF</strong> erklären Sie sich mit den Teilnahmebedingungen einverstanden.&nbsp;&nbsp;/&nbsp;&nbsp;By clicking <strong>KICK OFF</strong> you agree to the terms &amp; conditions above.
         </p>
       </div>
     </div>
@@ -234,6 +254,7 @@
     <button id="startButton">KICK OFF ▶</button>
 
     <div id="buttonRow">
+      <!-- FIX 6: larger restart icon via font-size in CSS above -->
       <button id="btnRestart">↺ PLAY AGAIN</button>
     </div>
 
@@ -253,10 +274,18 @@
   </div>
 
   <script>
-    // Hide T&C banner permanently once the player clicks KICK OFF (consent implied by click)
+    // Hide T&C banner + scroll hint permanently once the player clicks KICK OFF
     document.getElementById('startButton').addEventListener('click', () => {
       document.getElementById('tncBanner').style.display = 'none';
     }, { once: true });
+
+    // Hide scroll hint once user has scrolled to the bottom
+    const tncScroll = document.getElementById('tncScroll');
+    const tncHint   = document.getElementById('tncScrollHint');
+    tncScroll.addEventListener('scroll', () => {
+      const atBottom = tncScroll.scrollHeight - tncScroll.scrollTop <= tncScroll.clientHeight + 4;
+      tncHint.style.opacity = atBottom ? '0' : '1';
+    });
   </script>
 
   <script src="soccer.js"></script>
