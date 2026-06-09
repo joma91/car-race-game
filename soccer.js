@@ -604,12 +604,11 @@ function initSoccerGame() {
     ctx.fillStyle = colors.lightBlue;
     ctx.fillText('30 sec · score goals · beat the keeper', W / 2, 192);
 
-    // Controls box — FIX 3: all key labels same font/size
+    // Controls box — 3 rows only (CHIP removed), larger keys
     const controls = [
       ['◀  ▶', 'MOVE'],
       ['↑ hold', 'POWER'],
       ['SPACE', 'SHOOT'],
-      ['↓ hold', 'CHIP'],
     ];
     const boxX = 140, boxY = 210, boxW = W - 280, boxH = 108;
     ctx.fillStyle = 'rgba(255,212,82,0.07)';
@@ -619,8 +618,8 @@ function initSoccerGame() {
     ctx.strokeRect(boxX, boxY, boxW, boxH);
 
     const rowHt = boxH / controls.length;
-    const keyW = 72, keyH = 16;
-    const arrowGap = 16, descGap = 14;
+    const keyW = 86, keyH = 22;
+    const arrowGap = 18, descGap = 14;
     const centerX2 = boxX + boxW / 2;
     const rowStartX = centerX2 - (keyW / 2 + arrowGap + descGap + 28);
 
@@ -635,7 +634,7 @@ function initSoccerGame() {
       ctx.lineWidth = 1;
       ctx.strokeRect(keyX, keyY2, keyW, keyH);
 
-      ctx.font = '7px "Press Start 2P"';
+      ctx.font = '9px "Press Start 2P"';
       ctx.fillStyle = colors.yellow;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
