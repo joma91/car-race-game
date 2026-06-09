@@ -33,12 +33,16 @@
       gap: 10px;
     }
 
-    /* FIX 1: Canvas displayed larger via CSS scaling; internal resolution stays 700×400
-       so all game coordinate math remains correct */
+    /* Canvas scales to fit the viewport — width-capped at 840px but also
+       height-capped so T&C banner + button always stay on screen without scrolling.
+       The aspect ratio (700:400 = 7:4) is enforced by aspect-ratio so width
+       automatically shrinks when height is the limiting dimension. */
     canvas {
       display: block;
       width: min(840px, 95vw);
-      height: calc(min(840px, 95vw) * (400/700));
+      max-height: calc(100dvh - 190px); /* leaves room for banner + button */
+      aspect-ratio: 7 / 4;
+      height: auto;
       image-rendering: pixelated;
       border: 2px solid #FFD452;
       box-shadow: 0 0 40px rgba(255, 212, 82, 0.25), 0 0 80px rgba(255, 212, 82, 0.08);
@@ -46,6 +50,9 @@
 
     /* ── T&C Banner ───────────────────────── */
     #tncBanner {
+      /* Match the canvas display width exactly — canvas width is min(840px,95vw)
+         but may be narrower when height-constrained; we use the same formula
+         and accept a tiny mismatch on extreme short screens (rare). */
       width: min(840px, 95vw);
       background: rgba(0,0,0,0.6);
       border: 1px solid rgba(255,212,82,0.3);
@@ -221,8 +228,13 @@
     }
 
     @media (max-width: 860px) {
-      canvas { width: 95vw; height: calc(95vw * (400/700)); }
+      canvas { width: 95vw; }
       #tncBanner { width: 95vw; }
+    }
+
+    /* On very short screens (landscape phone etc.) shrink the T&C max-height */
+    @media (max-height: 600px) {
+      #tncScroll { max-height: 50px; }
     }
   </style>
 </head>
@@ -249,7 +261,7 @@
       <div id="tncScrollHint">▼</div>
       <div id="tncFooter">
         <p id="tncConsentNote">
-          Mit Klick auf <strong>KICK OFF</strong> erklären Sie sich mit den Teilnahmebedingungen einverstanden.&nbsp;&nbsp;/&nbsp;&nbsp;By clicking <strong>KICK OFF</strong> you agree to the terms &amp; conditions above.
+          Mit Klick auf <strong>KICK OFF</strong> erklärst du dich mit den Teilnahmebedingungen einverstanden.&nbsp;&nbsp;/&nbsp;&nbsp;By clicking <strong>KICK OFF</strong> you agree to the terms &amp; conditions above.
         </p>
       </div>
     </div>
