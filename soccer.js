@@ -690,7 +690,7 @@ function initSoccerGame() {
       ctx.fillStyle = colors.lightGray;
       ctx.fillText('No entries yet', W / 2, H / 2);
     } else {
-      const ordinals = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'];
+      const ordinals = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
       const anonLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
       let anonIdx = 0;
       const anonMap = {};
@@ -699,7 +699,7 @@ function initSoccerGame() {
           anonMap[entry.username] = 'Player ' + anonLetters[anonIdx++ % anonLetters.length];
         }
       });
-      leaderboard.forEach((entry, i) => {
+      leaderboard.slice(0, 9).forEach((entry, i) => {
         const y = 106 + i * 28;
         const isMe = entry.username === username;
         if (isMe) {
@@ -972,6 +972,7 @@ function initSoccerGame() {
   // ── Start Game ────────────────────────────────
   async function startGame() {
     if (!username) username = await getUsername();
+    document.body.classList.remove('state-menu'); // canvas no longer height-capped
     gameState = 'countdown';
     showLeaderboard = false;
     goals = 0; timeLeft = 30;
@@ -1028,6 +1029,7 @@ function initSoccerGame() {
   btnRestart.onclick = startGame;
 
   setupTouchControls();
+  document.body.classList.add('state-menu'); // cap canvas height on start screen
   waitForFont(() => {
     draw();
     setInterval(() => { if (gameState === 'menu') draw(); }, 50);
