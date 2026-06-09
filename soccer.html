@@ -15,10 +15,12 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      /* justify-content: flex-start + padding keeps the canvas at a consistent
+         distance from the top — same gap whether banner/button are visible or not */
+      justify-content: flex-start;
+      padding-top: max(16px, calc((100dvh - (min(840px, 95vw) * 4/7) - 190px) / 2));
       min-height: 100dvh;
       font-family: 'Press Start 2P', monospace;
-      /* overflow:hidden removed — it was clipping the button below the canvas */
       overflow-x: hidden;
       overflow-y: auto;
       user-select: none;
