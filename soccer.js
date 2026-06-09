@@ -528,16 +528,6 @@ function initSoccerGame() {
       if (missedTimer <= 0) missedShot = false;
     }
 
-    if (!shot && player && player.hasBall && gameState === 'playing') {
-      ctx.font = '6px "Press Start 2P"';
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.textAlign = 'center';
-      if (!player.powerCharging) {
-        ctx.fillText('↑ HOLD FOR POWER  ·  SPACE = SHOOT  ·  ↓ = CHIP', W / 2, H - 72);
-      } else {
-        ctx.fillText('SPACE = SHOOT  ·  ↓ = CHIP', W / 2, H - 72);
-      }
-    }
   }
 
   // ── FIGlet dot-matrix "CarOnSale" ──
