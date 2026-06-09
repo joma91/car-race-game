@@ -473,7 +473,7 @@ function initSoccerGame() {
     ctx.font = '8px "Press Start 2P"';
     ctx.fillStyle = colors.yellow;
     ctx.textAlign = 'center';
-    ctx.fillText('[ CarOnSale KICK ]', W / 2, 24);
+    ctx.fillText('[ CarOnSale - Daily Penalty ]', W / 2, 24);
 
     // Goals
     ctx.textAlign = 'left';
@@ -583,7 +583,7 @@ function initSoccerGame() {
     ctx.fillStyle = colors.yellow;
     ctx.textAlign = 'center';
     ctx.shadowColor = colors.yellow; ctx.shadowBlur = 6;
-    ctx.fillText('[ CarOnSale KICK ]', W / 2, 26);
+    ctx.fillText('[ CarOnSale - Daily Penalty ]', W / 2, 26);
     ctx.shadowBlur = 0;
 
     drawFiglet(W / 2, 54);
@@ -746,7 +746,7 @@ function initSoccerGame() {
           </tr>`;
         }).join('');
     w.document.write(`<!DOCTYPE html><html lang="en"><head>
-      <meta charset="UTF-8"><title>CarOnSale KICK – Top 10 Week ${kw}</title>
+      <meta charset="UTF-8"><title>CarOnSale - Daily Penalty – Top 10 Week ${kw}</title>
       <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
       <style>*{margin:0;padding:0;box-sizing:border-box;}
       body{background:#1a1d24;color:#fff;font-family:'Press Start 2P',monospace;
@@ -790,7 +790,7 @@ function initSoccerGame() {
         <div style="background:#2F343E;border:2px solid #FFD452;padding:32px;
                     text-align:center;max-width:360px;width:90%;
                     box-shadow:0 0 30px rgba(255,212,82,0.4);">
-          <div style="color:#FFD452;font-size:12px;margin-bottom:10px;">CarOnSale KICK</div>
+          <div style="color:#FFD452;font-size:12px;margin-bottom:10px;">CarOnSale - Daily Penalty</div>
           <div style="color:#fff;font-size:8px;margin-bottom:24px;line-height:2;">Pick your name</div>
           <input id="usernameInput" maxlength="16" placeholder="NAME..."
             autocomplete="off" spellcheck="false"
