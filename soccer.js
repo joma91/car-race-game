@@ -57,9 +57,9 @@ function initSoccerGame() {
   const buttonRow = document.getElementById('buttonRow');
   const btnRestart = document.getElementById('btnRestart');
 
-  // FIX 1: canvas is now 900×500 (declared in HTML); W/H read from it
-  const W = canvas.width;   // 900
-  const H = canvas.height;  // 500
+  // Canvas is 700×400 internally; CSS scales the display size up
+  const W = canvas.width;   // 700
+  const H = canvas.height;  // 400
 
   const colors = {
     yellow: '#FFD452', yellowDim: '#b8951a',
@@ -92,7 +92,7 @@ function initSoccerGame() {
   class Player {
     constructor() {
       this.x = W / 2;
-      this.y = H - 120;
+      this.y = H - 100;
       this.speed = 4;
       this.hasBall = true;
       this.powerCharging = false;
@@ -162,7 +162,7 @@ function initSoccerGame() {
   class Goalkeeper {
     constructor() {
       this.x = W / 2;
-      this.y = 90;
+      this.y = 80;
       this.targetX = W / 2;
       this.speed = 2.5 + Math.random() * 1.5;
       this.reactionDelay = 18 + Math.floor(Math.random() * 20);
@@ -184,7 +184,7 @@ function initSoccerGame() {
       }
       const dx = this.targetX - this.x;
       if (Math.abs(dx) > 1) this.x += Math.sign(dx) * Math.min(this.speed, Math.abs(dx));
-      this.x = Math.max(180, Math.min(W - 180, this.x));
+      this.x = Math.max(160, Math.min(W - 160, this.x));
     }
     draw() {
       ctx.save();
@@ -248,7 +248,7 @@ function initSoccerGame() {
     shot.vy += shot.arc;
     shot.arc += 0.004;
 
-    if (shot.y < 140 && keeper) {
+    if (shot.y < 120 && keeper) {
       if (keeper.checkSave(shot.x, shot.y, shot.r)) {
         spawnParticles(shot.x, shot.y, colors.red, 12);
         streakCount = 0; streakBonus = false;
@@ -256,7 +256,7 @@ function initSoccerGame() {
       }
     }
 
-    if (shot.y < 78 && shot.x > 220 && shot.x < W - 220) {
+    if (shot.y < 65 && shot.x > 195 && shot.x < W - 195) {
       onGoal(); return;
     }
 
@@ -377,7 +377,7 @@ function initSoccerGame() {
   }
 
   // ── Spectators ────────────────────────────────
-  const spectatorPositions = [55,85,115,145,175,205,240, 630,660,690,720,750,780,815];
+  const spectatorPositions = [55, 85, 115, 145, 175, 205, 500, 530, 560, 590, 620, 645];
   const spectatorFrames = [['o','|','/ \\'],['\\o/','|','/\\']];
   function drawSpectators() {
     spectatorTimer++;
@@ -401,19 +401,22 @@ function initSoccerGame() {
   function drawPitch() {
     ctx.fillStyle = '#1a1d24';
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#252930';
+
+    // Fill entire upper area with grass so there's no grey gap at the top
+    ctx.fillStyle = colors.grass1;
     ctx.fillRect(0, 0, W, H - 60);
 
-    for (let i = 0; i < 8; i++) {
+    // Striped grass overlay from bottom up
+    for (let i = 0; i < 12; i++) {
       ctx.fillStyle = i % 2 === 0 ? colors.grass1 : colors.grass2;
-      ctx.fillRect(0, H - 60 - i * 40, W, 40);
+      ctx.fillRect(0, H - 60 - i * 36, W, 36);
     }
 
     ctx.save();
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(W / 2, H / 2 + 90, 70, 0, Math.PI * 2);
+    ctx.arc(W / 2, H / 2 + 80, 60, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
 
@@ -421,28 +424,27 @@ function initSoccerGame() {
     ctx.lineWidth = 2;
     ctx.setLineDash([10, 10]);
     ctx.beginPath();
-    ctx.moveTo(0, H / 2 + 90); ctx.lineTo(W, H / 2 + 90);
+    ctx.moveTo(0, H / 2 + 80); ctx.lineTo(W, H / 2 + 80);
     ctx.stroke();
     ctx.setLineDash([]);
 
     ctx.strokeStyle = 'rgba(255,255,255,0.2)';
     ctx.lineWidth = 2;
-    ctx.strokeRect(180, 65, W - 360, 150);
-    ctx.strokeRect(290, 65, W - 580, 70);
+    ctx.strokeRect(150, 55, W - 300, 130);
+    ctx.strokeRect(250, 55, W - 500, 55);
 
-    // Goal posts — scaled for 900px wide canvas
-    const gx = 220, gw = W - 440, gh = 60;
+    const gx = 195, gw = W - 390, gh = 52;
     ctx.fillStyle = colors.white;
-    ctx.fillRect(gx - 6, 40, 6, gh + 10);
-    ctx.fillRect(gx + gw, 40, 6, gh + 10);
-    ctx.fillRect(gx - 6, 38, gw + 12, 5);
+    ctx.fillRect(gx - 6, 35, 6, gh + 10);
+    ctx.fillRect(gx + gw, 35, 6, gh + 10);
+    ctx.fillRect(gx - 6, 33, gw + 12, 4);
 
     ctx.strokeStyle = colors.netGray;
     ctx.lineWidth = 1;
-    for (let x = gx; x <= gx + gw; x += 16) {
-      ctx.beginPath(); ctx.moveTo(x, 43); ctx.lineTo(x, 43 + gh); ctx.stroke();
+    for (let x = gx; x <= gx + gw; x += 14) {
+      ctx.beginPath(); ctx.moveTo(x, 37); ctx.lineTo(x, 37 + gh); ctx.stroke();
     }
-    for (let y = 43; y <= 43 + gh; y += 12) {
+    for (let y = 37; y <= 37 + gh; y += 10) {
       ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(gx + gw, y); ctx.stroke();
     }
 
@@ -450,7 +452,7 @@ function initSoccerGame() {
       ctx.save();
       ctx.globalAlpha = (goalFlash / 20) * 0.4;
       ctx.fillStyle = colors.yellow;
-      ctx.fillRect(gx, 40, gw, gh);
+      ctx.fillRect(gx, 35, gw, gh);
       ctx.restore();
       goalFlash--;
     }
@@ -583,43 +585,43 @@ function initSoccerGame() {
     for (let y = 0; y < H; y += 30) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
-    ctx.fillRect(0, 0, W, 48);
+    ctx.fillRect(0, 0, W, 42);
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0, 48); ctx.lineTo(W, 48); ctx.stroke();
-    ctx.font = '8px "Press Start 2P"';
+    ctx.beginPath(); ctx.moveTo(0, 42); ctx.lineTo(W, 42); ctx.stroke();
+    ctx.font = '7px "Press Start 2P"';
     ctx.fillStyle = colors.yellow;
     ctx.textAlign = 'center';
     ctx.shadowColor = colors.yellow; ctx.shadowBlur = 6;
-    ctx.fillText('[ CarOnSale KICK ]', W / 2, 30);
+    ctx.fillText('[ CarOnSale KICK ]', W / 2, 26);
     ctx.shadowBlur = 0;
 
-    drawFiglet(W / 2, 62);
+    drawFiglet(W / 2, 54);
 
-    ctx.font = '13px "Press Start 2P"';
+    ctx.font = '11px "Press Start 2P"';
     ctx.fillStyle = colors.white;
     ctx.textAlign = 'center';
     ctx.shadowColor = colors.lightBlue; ctx.shadowBlur = 6;
-    ctx.fillText('K I C K', W / 2, 180);
+    ctx.fillText('K I C K', W / 2, 160);
     ctx.shadowBlur = 0;
 
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 1; ctx.setLineDash([6, 6]);
-    ctx.beginPath(); ctx.moveTo(130, 194); ctx.lineTo(W - 130, 194); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(120, 172); ctx.lineTo(W - 120, 172); ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.font = '9px "Press Start 2P"';
+    ctx.font = '8px "Press Start 2P"';
     ctx.fillStyle = colors.lightBlue;
-    ctx.fillText('30 sec  ·  score goals  ·  beat the keeper', W / 2, 216);
+    ctx.fillText('30 sec · score goals · beat the keeper', W / 2, 192);
 
-    // FIX 3 + FIX 5: controls table — all arrows same font/size, consistent alignment
+    // Controls box — FIX 3: all key labels same font/size
     const controls = [
       ['◀  ▶', 'MOVE'],
       ['↑ hold', 'POWER'],
       ['SPACE', 'SHOOT'],
       ['↓ hold', 'CHIP'],
     ];
-    const boxX = 170, boxY = 234, boxW = W - 340, boxH = 116;
+    const boxX = 140, boxY = 210, boxW = W - 280, boxH = 108;
     ctx.fillStyle = 'rgba(255,212,82,0.07)';
     ctx.fillRect(boxX, boxY, boxW, boxH);
     ctx.strokeStyle = colors.yellow;
@@ -627,10 +629,10 @@ function initSoccerGame() {
     ctx.strokeRect(boxX, boxY, boxW, boxH);
 
     const rowHt = boxH / controls.length;
-    const keyW = 80, keyH = 18;
-    const arrowGap = 18, descGap = 14;
+    const keyW = 72, keyH = 16;
+    const arrowGap = 16, descGap = 14;
     const centerX2 = boxX + boxW / 2;
-    const rowStartX = centerX2 - (keyW / 2 + arrowGap + descGap + 30);
+    const rowStartX = centerX2 - (keyW / 2 + arrowGap + descGap + 28);
 
     controls.forEach(([key, desc], i) => {
       const rowY = boxY + i * rowHt + rowHt / 2;
@@ -643,8 +645,7 @@ function initSoccerGame() {
       ctx.lineWidth = 1;
       ctx.strokeRect(keyX, keyY2, keyW, keyH);
 
-      // FIX 3: all key labels use the SAME font — no mixed unicode sizing issues
-      ctx.font = '8px "Press Start 2P"';
+      ctx.font = '7px "Press Start 2P"';
       ctx.fillStyle = colors.yellow;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -662,11 +663,11 @@ function initSoccerGame() {
     ctx.font = '7px "Press Start 2P"';
     ctx.fillStyle = colors.red;
     ctx.textAlign = 'center';
-    ctx.fillText('🔥  3 goals in a row  =  x2 points!', W / 2, 370);
+    ctx.fillText('🔥  3 goals in a row  =  x2 points!', W / 2, 338);
 
     const bt = Date.now() / 500;
-    const bBounce = Math.abs(Math.sin(bt)) * 32;
-    const ballR = 12;
+    const bBounce = Math.abs(Math.sin(bt)) * 28;
+    const ballR = 10;
     const floorY = H - ballR - 2;
     drawSoccerBall(W / 2, floorY - bBounce, ballR);
   }
@@ -674,16 +675,16 @@ function initSoccerGame() {
   // ── Leaderboard Overlay ───────────────────────
   function drawLeaderboardOverlay() {
     ctx.fillStyle = 'rgba(0,0,0,0.92)';
-    ctx.fillRect(80, 50, W - 160, H - 100);
+    ctx.fillRect(60, 45, W - 120, H - 90);
     ctx.strokeStyle = colors.yellow;
     ctx.lineWidth = 2;
-    ctx.strokeRect(80, 50, W - 160, H - 100);
+    ctx.strokeRect(60, 45, W - 120, H - 90);
 
-    ctx.font = '10px "Press Start 2P"';
+    ctx.font = '9px "Press Start 2P"';
     ctx.fillStyle = colors.yellow;
     ctx.textAlign = 'center';
     ctx.shadowColor = colors.yellow; ctx.shadowBlur = 8;
-    ctx.fillText('TOP 10', W / 2, 76);
+    ctx.fillText('TOP 10', W / 2, 68);
     ctx.shadowBlur = 0;
 
     const now = new Date();
@@ -692,7 +693,7 @@ function initSoccerGame() {
     const yyyy = now.getFullYear();
     ctx.font = '6px "Press Start 2P"';
     ctx.fillStyle = colors.lightBlue;
-    ctx.fillText(`${dd}.${mm}.${yyyy}`, W / 2, 94);
+    ctx.fillText(`${dd}.${mm}.${yyyy}`, W / 2, 84);
 
     if (leaderboard.length === 0) {
       ctx.font = '7px "Press Start 2P"';
@@ -709,35 +710,35 @@ function initSoccerGame() {
         }
       });
       leaderboard.forEach((entry, i) => {
-        const y = 114 + i * 24;
+        const y = 104 + i * 21;
         const isMe = entry.username === username;
         if (isMe) {
           ctx.fillStyle = 'rgba(255,212,82,0.22)';
-          ctx.fillRect(88, y - 9, W - 176, 22);
+          ctx.fillRect(68, y - 8, W - 136, 20);
         }
-        ctx.font = '7px "Press Start 2P"';
+        ctx.font = '6px "Press Start 2P"';
         ctx.textAlign = 'left';
         const rankLabel = ordinals[i] || `${i+1}th`;
         ctx.fillStyle = i===0?'#FFD700':i===1?'#C0C0C0':i===2?'#CD7F32':colors.lightGray;
-        ctx.fillText(rankLabel, 96, y + 4);
+        ctx.fillText(rankLabel, 76, y + 4);
         if (isMe) {
           ctx.fillStyle = colors.yellow;
           ctx.shadowColor = colors.yellow; ctx.shadowBlur = 6;
-          ctx.fillText('You', 150, y + 4);
+          ctx.fillText('You', 122, y + 4);
           ctx.shadowBlur = 0;
         } else {
           ctx.fillStyle = colors.lightGray;
-          ctx.fillText(anonMap[entry.username], 150, y + 4);
+          ctx.fillText(anonMap[entry.username], 122, y + 4);
         }
         ctx.textAlign = 'right';
         ctx.fillStyle = isMe ? colors.yellow : colors.lightBlue;
-        ctx.fillText(`${entry.goals_scored} ⚽`, W - 96, y + 4);
+        ctx.fillText(`${entry.goals_scored} ⚽`, W - 76, y + 4);
       });
     }
-    ctx.font = '6px "Press Start 2P"';
+    ctx.font = '5px "Press Start 2P"';
     ctx.fillStyle = colors.lightGray;
     ctx.textAlign = 'center';
-    ctx.fillText('ENTER = PLAY AGAIN', W / 2, H - 60);
+    ctx.fillText('ENTER = PLAY AGAIN', W / 2, H - 52);
   }
 
   // ── Leaderboard Page ──────────────────────────
