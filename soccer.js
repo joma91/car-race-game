@@ -1,5 +1,8 @@
 // ── Supabase Config ───────────────────────────
 const SUPABASE_URL = 'https://rwuogkjbpnhahdvudxax.supabase.co';
+
+// Global: wird in startGame() gesetzt, in saveScore() gelesen
+let gameStartedAt = null;
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3dW9na2picG5oYWhkdnVkeGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNzI3NzYsImV4cCI6MjA5MzY0ODc3Nn0.ZoNkmUpMivwl3GlHl63qhgRPrQ4nbnsniUCftakRghY';
 
 async function supabaseFetch(path, options = {}) {
@@ -104,11 +107,7 @@ function initSoccerGame() {
   let goalFlash = 0;
   let spectatorTimer = 0;
 
-  // ── ÄNDERUNG 2: Spielstart-Zeitstempel ───────────────────────────────────
-  // Wird in startGame() gesetzt und in saveScore() mitgeschickt,
-  // damit die Edge Function prüfen kann ob ~30 Sekunden vergangen sind.
-  let gameStartedAt = null;
-  // ── ENDE ÄNDERUNG 2 ───────────────────────────────────────────────────────
+  // gameStartedAt ist global definiert (oben in der Datei)
 
   // ── Player ────────────────────────────────────
   let player = null;
