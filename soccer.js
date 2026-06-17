@@ -1,8 +1,8 @@
 // ── Supabase Config ───────────────────────────
 const SUPABASE_URL = 'https://rwuogkjbpnhahdvudxax.supabase.co';
 
-// Global: wird in startGame() gesetzt, in saveScore() gelesen
-let gameStartedAt = null;
+// ÄNDERUNG: gameStartedAt entfernt, stattdessen session_id
+let gameSessionId = null;
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3dW9na2picG5oYWhkdnVkeGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNzI3NzYsImV4cCI6MjA5MzY0ODc3Nn0.ZoNkmUpMivwl3GlHl63qhgRPrQ4nbnsniUCftakRghY';
 
 async function supabaseFetch(path, options = {}) {
@@ -37,9 +37,24 @@ function getWeekNumber(date) {
   return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
-// ── ÄNDERUNG 1: saveScore schickt jetzt an die Edge Function ──────────────
-// Vorher wurde direkt in Supabase geschrieben (unsicher).
-// Jetzt geht der Score durch die Edge Function, die den Wert serverseitig prüft.
+// ÄNDERUNG: startGame ruft jetzt zuerst /start-game auf, um eine session_id zu holen
+async function startGameSession() {
+  const res = await fetch(
+    SUPABASE_URL + '/functions/v1/start-game',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + SUPABASE_KEY
+      }
+    }
+  );
+  const data = await res.json();
+  if (!data.session_id) throw new Error('Could not start game session');
+  return data.session_id;
+}
+
+// ÄNDERUNG: saveScore schickt jetzt session_id statt started_at
 async function saveScore(username, goals_scored) {
   const res = await fetch(
     SUPABASE_URL + '/functions/v1/save-score',
@@ -52,7 +67,7 @@ async function saveScore(username, goals_scored) {
       body: JSON.stringify({
         username,
         goals_scored,
-        started_at: gameStartedAt   // NEU: Zeitstempel wird mitgeschickt
+        session_id: gameSessionId   // session_id statt started_at
       })
     }
   );
@@ -61,7 +76,6 @@ async function saveScore(username, goals_scored) {
     console.error('Score konnte nicht gespeichert werden:', err);
   }
 }
-// ── ENDE ÄNDERUNG 1 ───────────────────────────────────────────────────────
 
 async function loadLeaderboard() {
   const data = await supabaseFetch(
@@ -106,8 +120,6 @@ function initSoccerGame() {
   let missedShot = false, missedTimer = 0;
   let goalFlash = 0;
   let spectatorTimer = 0;
-
-  // gameStartedAt ist global definiert (oben in der Datei)
 
   // ── Player ────────────────────────────────────
   let player = null;
@@ -980,21 +992,25 @@ function initSoccerGame() {
   }
 
   // ── Start Game ────────────────────────────────
+  // ÄNDERUNG: startGame holt jetzt zuerst eine session_id vom Server
   async function startGame() {
     if (!username) username = await getUsername();
     document.body.classList.remove('state-menu');
+
+    // Session serverseitig starten – Timestamp wird dort gesetzt
+    try {
+      gameSessionId = await startGameSession();
+    } catch (e) {
+      console.error('Could not start game session:', e);
+      return; // Spiel nicht starten wenn Session fehlschlägt
+    }
+
     gameState = 'countdown';
     showLeaderboard = false;
     goals = 0; timeLeft = 30;
     streakCount = 0; streakBonus = false; streakTimer = 0;
     particles = []; confetti = [];
     shot = null; player = null; keeper = null;
-
-    // ── ÄNDERUNG 3: Zeitstempel beim Spielstart setzen ────────────────────
-    // Dieser Wert wird am Ende mit dem Score mitgeschickt,
-    // damit die Edge Function prüfen kann ob ~30 Sekunden gespielt wurde.
-    gameStartedAt = Date.now();
-    // ── ENDE ÄNDERUNG 3 ───────────────────────────────────────────────────
 
     startButton.style.display = 'none';
     buttonRow.style.display = 'none';
