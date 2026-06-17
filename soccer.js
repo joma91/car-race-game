@@ -34,13 +34,31 @@ function getWeekNumber(date) {
   return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
-async function saveScore(username, goals) {
-  await supabaseFetch('/rest/v1/kick_scores', {
-    method: 'POST',
-    headers: { 'Prefer': 'return=minimal' },
-    body: JSON.stringify({ username, goals_scored: goals })
-  });
+// ── ÄNDERUNG 1: saveScore schickt jetzt an die Edge Function ──────────────
+// Vorher wurde direkt in Supabase geschrieben (unsicher).
+// Jetzt geht der Score durch die Edge Function, die den Wert serverseitig prüft.
+async function saveScore(username, goals_scored) {
+  const res = await fetch(
+    SUPABASE_URL + '/functions/v1/save-score',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + SUPABASE_KEY
+      },
+      body: JSON.stringify({
+        username,
+        goals_scored,
+        started_at: gameStartedAt   // NEU: Zeitstempel wird mitgeschickt
+      })
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    console.error('Score konnte nicht gespeichert werden:', err);
+  }
 }
+// ── ENDE ÄNDERUNG 1 ───────────────────────────────────────────────────────
 
 async function loadLeaderboard() {
   const data = await supabaseFetch(
@@ -57,7 +75,6 @@ function initSoccerGame() {
   const buttonRow = document.getElementById('buttonRow');
   const btnRestart = document.getElementById('btnRestart');
 
-  // Canvas is 700×400 internally; CSS scales the display size up
   const W = canvas.width;   // 700
   const H = canvas.height;  // 400
 
@@ -86,6 +103,12 @@ function initSoccerGame() {
   let missedShot = false, missedTimer = 0;
   let goalFlash = 0;
   let spectatorTimer = 0;
+
+  // ── ÄNDERUNG 2: Spielstart-Zeitstempel ───────────────────────────────────
+  // Wird in startGame() gesetzt und in saveScore() mitgeschickt,
+  // damit die Edge Function prüfen kann ob ~30 Sekunden vergangen sind.
+  let gameStartedAt = null;
+  // ── ENDE ÄNDERUNG 2 ───────────────────────────────────────────────────────
 
   // ── Player ────────────────────────────────────
   let player = null;
@@ -402,11 +425,9 @@ function initSoccerGame() {
     ctx.fillStyle = '#1a1d24';
     ctx.fillRect(0, 0, W, H);
 
-    // Fill entire upper area with grass so there's no grey gap at the top
     ctx.fillStyle = colors.grass1;
     ctx.fillRect(0, 0, W, H - 60);
 
-    // Striped grass overlay from bottom up
     for (let i = 0; i < 12; i++) {
       ctx.fillStyle = i % 2 === 0 ? colors.grass1 : colors.grass2;
       ctx.fillRect(0, H - 60 - i * 36, W, 36);
@@ -463,7 +484,6 @@ function initSoccerGame() {
 
   // ── HUD ───────────────────────────────────────
   function drawHUD() {
-    // HUD bar
     ctx.fillStyle = 'rgba(0,0,0,0.90)';
     ctx.fillRect(0, 0, W, 42);
     ctx.strokeStyle = colors.yellow;
@@ -475,7 +495,6 @@ function initSoccerGame() {
     ctx.textAlign = 'center';
     ctx.fillText('[ CarOnSale - Daily Penalty ]', W / 2, 24);
 
-    // Goals
     ctx.textAlign = 'left';
     ctx.font = '11px "Press Start 2P"';
     ctx.fillStyle = colors.white;
@@ -483,13 +502,11 @@ function initSoccerGame() {
     ctx.fillStyle = colors.yellow;
     ctx.fillText(String(goals).padStart(2, '0'), 36, 24);
 
-    // FIX 4: Timer — larger, pill background, urgent colour
     const timerStr = `${String(timeLeft).padStart(2, '0')}s`;
     const urgent = timeLeft <= 10;
     const timerX = W - 14;
     const timerY = 12;
     const timerW = 68, timerH = 22;
-    // Pill background
     ctx.fillStyle = urgent ? 'rgba(231,76,60,0.30)' : 'rgba(186,197,229,0.12)';
     ctx.beginPath();
     ctx.roundRect(timerX - timerW, timerY, timerW, timerH, 4);
@@ -499,13 +516,12 @@ function initSoccerGame() {
     ctx.beginPath();
     ctx.roundRect(timerX - timerW, timerY, timerW, timerH, 4);
     ctx.stroke();
-    // Timer text
     ctx.font = urgent ? 'bold 12px "Press Start 2P"' : '11px "Press Start 2P"';
     ctx.fillStyle = urgent ? colors.red : colors.lightBlue;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillText(timerStr, timerX - 6, timerY + timerH / 2);
-    ctx.textBaseline = 'middle'; // reset after
+    ctx.textBaseline = 'middle';
 
     if (streakBonus) {
       const pulse = Math.sin(Date.now() * 0.01) > 0;
@@ -527,7 +543,6 @@ function initSoccerGame() {
       missedTimer--;
       if (missedTimer <= 0) missedShot = false;
     }
-
   }
 
   // ── FIGlet dot-matrix "CarOnSale" ──
@@ -604,7 +619,6 @@ function initSoccerGame() {
     ctx.fillStyle = colors.lightBlue;
     ctx.fillText('30 sec · score goals · beat the keeper', W / 2, 192);
 
-    // Controls box — 3 rows only (CHIP removed), larger keys
     const controls = [
       ['◀  ▶', 'MOVE'],
       ['↑ hold', 'POWER'],
@@ -897,19 +911,17 @@ function initSoccerGame() {
   });
 
   // ── Countdown ─────────────────────────────────
-  // FIX 4: slower countdown (1 s per step) + "GET READY" label
   function startCountdown(cb) {
     let count = 3; countdown = count;
     const iv = setInterval(() => {
       count--; countdown = count;
       if (count <= 0) { clearInterval(iv); countdown = 0; cb(); }
-    }, 1000); // was 800ms
+    }, 1000);
   }
 
   function drawCountdown() {
     if (countdown > 0) {
       ctx.save();
-      // "GET READY" label above the number
       ctx.font = '12px "Press Start 2P"';
       ctx.textAlign = 'center';
       ctx.fillStyle = colors.lightBlue;
@@ -971,13 +983,20 @@ function initSoccerGame() {
   // ── Start Game ────────────────────────────────
   async function startGame() {
     if (!username) username = await getUsername();
-    document.body.classList.remove('state-menu'); // canvas no longer height-capped
+    document.body.classList.remove('state-menu');
     gameState = 'countdown';
     showLeaderboard = false;
     goals = 0; timeLeft = 30;
     streakCount = 0; streakBonus = false; streakTimer = 0;
     particles = []; confetti = [];
     shot = null; player = null; keeper = null;
+
+    // ── ÄNDERUNG 3: Zeitstempel beim Spielstart setzen ────────────────────
+    // Dieser Wert wird am Ende mit dem Score mitgeschickt,
+    // damit die Edge Function prüfen kann ob ~30 Sekunden gespielt wurde.
+    gameStartedAt = Date.now();
+    // ── ENDE ÄNDERUNG 3 ───────────────────────────────────────────────────
+
     startButton.style.display = 'none';
     buttonRow.style.display = 'none';
     if (gameLoop) clearInterval(gameLoop);
@@ -1028,7 +1047,7 @@ function initSoccerGame() {
   btnRestart.onclick = startGame;
 
   setupTouchControls();
-  document.body.classList.add('state-menu'); // cap canvas height on start screen
+  document.body.classList.add('state-menu');
   waitForFont(() => {
     draw();
     setInterval(() => { if (gameState === 'menu') draw(); }, 50);
