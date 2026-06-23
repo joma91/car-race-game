@@ -975,7 +975,7 @@ function initSoccerGame() {
     if (gameLoop) clearInterval(gameLoop);
     startButton.style.display = 'none';
     buttonRow.style.display = 'flex';
-    if (!username) username = await getUsername();
+    if (!username) username = _pidFromUrl || await getUsername();
     try {
       await saveScore(username, finalGoals);
       leaderboard = await loadLeaderboard();
@@ -994,7 +994,7 @@ function initSoccerGame() {
   // ── Start Game ────────────────────────────────
   // ÄNDERUNG: startGame holt jetzt zuerst eine session_id vom Server
   async function startGame() {
-    if (!username) username = await getUsername();
+    if (!username) username = _pidFromUrl || await getUsername();
     document.body.classList.remove('state-menu');
 
     // Session serverseitig starten – Timestamp wird dort gesetzt
